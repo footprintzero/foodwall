@@ -1,0 +1,238 @@
+nutrition id,crop group,food item name,sgp group
+1,allium,garlic,04 vegetable
+2,allium,leek,04 vegetable
+3,allium,onion,04 vegetable
+4,allium,shallot,04 vegetable
+5,cereal,barley,02 cereal wholegrain
+6,cereal,corn,02 cereal wholegrain
+7,cereal,millet,02 cereal wholegrain
+8,cereal,oat bran,02 cereal wholegrain
+9,cereal,rice,01 cereal refined
+10,cereal,wheat germ,01 cereal refined
+11,cereal,rice - wild,02 cereal wholegrain
+12,cereal,sorghum grain,02 cereal wholegrain
+13,cereal,triticale,02 cereal wholegrain
+14,dairy,cheese,05 animal
+15,dairy,egg,05 animal
+16,dairy,kefir,05 animal
+17,dairy,milk - human,05 animal
+18,dairy,milk - cow whole 3.25% milkfat,05 animal
+19,dairy,yogurt,05 animal
+20,dairy,butter,05 animal
+21,dairy,cream,05 animal
+22,fish,fish,05 animal
+23,fruit bush,blackberry,03 fruit
+24,fruit bush,blueberry,03 fruit
+25,fruit bush,cranberry,03 fruit
+26,fruit bush,currants,03 fruit
+27,fruit bush,elderberry,03 fruit
+28,fruit bush,gooseberry,03 fruit
+29,fruit bush,mullberry,03 fruit
+30,fruit bush,pineapple,03 fruit
+31,fruit bush,raspberry,03 fruit
+32,fruit bush,strawberry,03 fruit
+33,fruit bush,watermelon,03 fruit
+34,fruit tree,acerola,03 fruit
+35,fruit tree,apples,03 fruit
+36,fruit tree,apricots,03 fruit
+37,fruit tree,avocados,03 fruit
+38,fruit tree,bananas,03 fruit
+39,fruit tree,breadfruit,03 fruit
+40,fruit tree,carambola,03 fruit
+41,fruit tree,cherimoya,03 fruit
+42,fruit tree,cherries,03 fruit
+43,fruit tree,crabapples,03 fruit
+44,fruit tree,date,03 fruit
+45,fruit tree,drumstick pods,03 fruit
+46,fruit tree,feijoa,03 fruit
+47,fruit tree,figs,03 fruit
+48,fruit tree,grapefruit,03 fruit
+49,fruit tree,guavas,03 fruit
+50,fruit tree,jackfruit,03 fruit
+51,fruit tree,kiwifruit,03 fruit
+52,fruit tree,kumquats,03 fruit
+53,fruit tree,lemons,03 fruit
+54,fruit tree,limes,03 fruit
+55,fruit tree,litchis,03 fruit
+56,fruit tree,loquats,03 fruit
+57,fruit tree,mammy-apple,03 fruit
+58,fruit tree,mangos,03 fruit
+59,fruit tree,melons,03 fruit
+60,fruit tree,nectarines,03 fruit
+61,fruit tree,oranges,03 fruit
+62,fruit tree,papayas,03 fruit
+63,fruit tree,passion-fruit,03 fruit
+64,fruit tree,peaches,03 fruit
+65,fruit tree,pears,03 fruit
+66,fruit tree,persimmons,03 fruit
+67,fruit tree,plantains,03 fruit
+68,fruit tree,plums,03 fruit
+69,fruit tree,pomegranates,03 fruit
+70,fruit tree,quinces,03 fruit
+71,fruit tree,sapodilla,03 fruit
+72,fruit tree,sapote,03 fruit
+73,fruit tree,soursop,03 fruit
+74,fruit tree,sugar-apples,03 fruit
+75,fruit tree,tamarinds,03 fruit
+76,fruit tree,tangerines,03 fruit
+77,fruit tree,cashew,03 fruit
+78,fruit tree,almonds,03 fruit
+79,fruit vine,chayote,03 fruit
+80,fruit vine,grapes,03 fruit
+81,legume,beans,04 vegetable
+82,legume,broadbeans,04 vegetable
+83,legume,broadbeans (fava beans),04 vegetable
+84,legume,chickpea,04 vegetable
+85,legume,cowpeas,04 vegetable
+86,legume,hyacinth beans,04 vegetable
+87,legume,lentils,04 vegetable
+88,legume,lima beans,04 vegetable
+89,legume,mothbeans,04 vegetable
+90,legume,mungo beans,04 vegetable
+91,legume,nuts,04 vegetable
+92,legume,peas,04 vegetable
+93,legume,pigeon peas (red gram),04 vegetable
+94,legume,pigeonpeas,04 vegetable
+95,legume,winged beans,04 vegetable
+96,legume,yardlong beans,04 vegetable
+97,oil crop and seeds,alfalfa seeds,04 vegetable
+98,oil crop and seeds,coconut meat,04 vegetable
+99,oil crop and seeds,peanut,04 vegetable
+100,oil crop and seedsd,radish seeds,04 vegetable
+101,oil crop and seedsd,seeds,04 vegetable
+102,oil crop and seeds,soybean,04 vegetable
+103,oil crop and seeds,olive,04 vegetable
+104,oil crop and seeds,sesame seed,04 vegetable
+105,oil crop and seeds,sunflower seed,04 vegetable
+106,oil crop and seeds,cotton seed,04 vegetable
+107,oil from vegetable,soybean oil,04 vegetable
+108,oil from vegetable,palm oil,04 vegetable
+109,oil from vegetable,sunflower seed oil,04 vegetable
+110,oil from vegetable,mustard oil,04 vegetable
+111,oil from vegetable,cottonseed oil,04 vegetable
+112,oil from vegetable,peanut oil,04 vegetable
+113,oil from vegetable,olive oil,04 vegetable
+114,oil from vegetable,corn oil,04 vegetable
+115,oil from vegetable,coconut oil,04 vegetable
+116,oil from vegetable,palm kernel oil,04 vegetable
+117,oil from vegetable,rice oil,04 vegetable
+118,oil from vegetable,sesame seed oil,04 vegetable
+119,meat,beef,05 animal
+120,meat,bison,05 animal
+121,meat,canada goose,05 animal
+122,meat,chicken,05 animal
+123,meat,duck,05 animal
+124,meat,emu,05 animal
+125,meat,frog legs,05 animal
+126,meat,game meat,05 animal
+127,meat,goose,05 animal
+128,meat,guinea hen,05 animal
+129,meat,lamb,05 animal
+130,meat,ostrich,05 animal
+131,meat,pheasant,05 animal
+132,meat,pork,05 animal
+133,meat,pork loin,05 animal
+134,meat,poultry,05 animal
+135,meat,quail,05 animal
+136,meat,ruffed grouse,05 animal
+137,meat,squab,05 animal
+138,meat,turkey,05 animal
+139,meat,turtle,05 animal
+140,meat,veal,05 animal
+141,animal products,offals,05 animal
+142,animal products,animal fat,05 animal
+143,animal products,fish oil,05 animal
+144,mushroom,mushrooms,04 vegetable
+145,processed grain,corn grain - yellow,01 cereal refined
+146,processed grain,noodles - egg,01 cereal refined
+147,processed grain,noodles - soba,01 cereal refined
+148,processed grain,pasta - whole wheat,01 cereal refined
+149,processed grain,rice noodles - dry,01 cereal refined
+150,processed grain,rye flour,01 cereal refined
+151,processed grain,wheat flour - white,01 cereal refined
+152,processed grain,wheat flour - whole grain,02 cereal wholegrain
+153,root,arrowroot,04 vegetable
+154,root,beets,04 vegetable
+155,root,burdock root,04 vegetable
+156,root,carrot,04 vegetable
+157,root,cassava,04 vegetable
+158,root,chicory roots,04 vegetable
+159,root,ginger root,04 vegetable
+160,root,lotus root,04 vegetable
+161,root,parsnips,04 vegetable
+162,root,holland potato,04 vegetable
+163,root,radishes,04 vegetable
+164,root,rutabagas,04 vegetable
+165,root,sweet potato,04 vegetable
+166,root,taro,04 vegetable
+167,root,turnips,04 vegetable
+168,root,waterchestnuts,04 vegetable
+169,root,yam,04 vegetable
+170,root,yautia (tannier),04 vegetable
+171,shellfish,crustaceans,05 animal
+172,shellfish,mollusks,05 animal
+173,succulent,nopales,05 animal
+174,vegetable aquatic,seaweed,04 vegetable
+175,vegetable fruit,broccoli,04 vegetable
+176,vegetable fruit,broccoli raab,04 vegetable
+177,vegetable fruit,cardoon,04 vegetable
+178,vegetable fruit,cauliflower,04 vegetable
+179,vegetable fruit,cucumber,04 vegetable
+180,vegetable fruit,brinjal,04 vegetable
+181,vegetable fruit,gourd,04 vegetable
+182,vegetable fruit,ladys finger,04 vegetable
+183,vegetable fruit,peppers,04 vegetable
+184,vegetable fruit,prickly pears,04 vegetable
+185,vegetable fruit,pumpkin,04 vegetable
+186,vegetable fruit,squash,04 vegetable
+187,vegetable fruit,tomatillos,04 vegetable
+188,vegetable fruit,tomato,04 vegetable
+189,vegetable fruit,waxgourd,04 vegetable
+190,vegetable leafy green,amaranth leaves,04 vegetable
+191,vegetable leafy green,artichokes,04 vegetable
+192,vegetable leafy green,arugula,04 vegetable
+193,vegetable leafy green,asparagus,04 vegetable
+194,vegetable leafy green,bamboo shoots,04 vegetable
+195,vegetable leafy green,beet greens,04 vegetable
+196,vegetable leafy green,borage,04 vegetable
+197,vegetable leafy green,brussels sprouts,04 vegetable
+198,vegetable leafy green,cabbage,04 vegetable
+199,vegetable leafy green,celeriac,04 vegetable
+200,vegetable leafy green,celery,04 vegetable
+201,vegetable leafy green,chard,04 vegetable
+202,vegetable leafy green,chicory greens,04 vegetable
+203,vegetable leafy green,chives,04 vegetable
+204,vegetable leafy green,collards,04 vegetable
+205,vegetable leafy green,coriander (cilantro) leaves,04 vegetable
+206,vegetable leafy green,cress,04 vegetable
+207,vegetable leafy green,dandelion greens,04 vegetable
+208,vegetable leafy green,endive,04 vegetable
+209,vegetable leafy green,fennel,04 vegetable
+210,vegetable leafy green,kale,04 vegetable
+211,vegetable leafy green,kohlrabi,04 vegetable
+212,vegetable leafy green,lemon grass (citronella),04 vegetable
+213,vegetable leafy green,lettuce,04 vegetable
+214,vegetable leafy green,lupins,04 vegetable
+215,vegetable leafy green,mustard greens,04 vegetable
+216,vegetable leafy green,mustard spinach,04 vegetable
+217,vegetable leafy green,pumpkin leaves,04 vegetable
+218,vegetable leafy green,radicchio,04 vegetable
+219,vegetable leafy green,rhubarb,04 vegetable
+220,vegetable leafy green,spinach,04 vegetable
+221,vegetable leafy green,sweet potato leaves,04 vegetable
+222,vegetable leafy green,taro leaves,04 vegetable
+223,vegetable leafy green,turnip greens,04 vegetable
+224,vegetable leafy green,watercress,04 vegetable
+225,sweeteners,sugar raw,05 animal
+226,sweeteners,honey,05 animal
+227,sweeteners,sugar cane,05 animal
+228,stimulants,cocoa,05 animal
+229,stimulants,coffee,05 animal
+230,stimulants,tea,05 animal
+231,spices,chili dried,05 animal
+232,spices,peppercorn,05 animal
+233,spices,cloves,05 animal
+234,alcoholic beverages,lager beer,05 animal
+235,alcoholic beverages,high alcohol beer,05 animal
+236,alcoholic beverages,wine,05 animal
+237,alcoholic beverages,distilled alcohol,05 animal

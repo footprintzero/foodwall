@@ -1,0 +1,31 @@
+nutrition group,element,wt
+protein,C,0.4663
+protein,H,0.0725
+protein,O,0.2902
+protein,N,0.16
+protein,S,0.011
+sat fats,C,0.753
+sat fats,H,0.127
+sat fats,O,0.12
+sat fats,N,0
+sat fats,S,0
+mono unsaturated,C,0.765
+mono unsaturated,H,0.1216
+mono unsaturated,O,0.1133
+mono unsaturated,N,0
+mono unsaturated,S,0
+polyunsaturated,C,0.765
+polyunsaturated,H,0.1216
+polyunsaturated,O,0.1133
+polyunsaturated,N,0
+polyunsaturated,S,0
+carbs,C,0.4417
+carbs,H,0.0626
+carbs,O,0.4957
+carbs,N,0
+carbs,S,0
+fiber,C,0.46342
+fiber,H,0.061
+fiber,O,0.42557
+fiber,N,0
+fiber,S,0

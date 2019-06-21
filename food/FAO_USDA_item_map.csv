@@ -1,0 +1,126 @@
+id,nutrition id,name,group,yield
+2511,151,Wheat and products,Cereals - Excluding Beer,3.25
+2805,9,Rice (Milled Equivalent),Cereals - Excluding Beer,4.51
+2513,5,Barley and products,Cereals - Excluding Beer,2.88
+2514,6,Maize and products,Cereals - Excluding Beer,5.46
+2515,150,Rye and products,Cereals - Excluding Beer,2.91
+2516,8,Oats,Cereals - Excluding Beer,2.43
+2517,7,Millet and products,Cereals - Excluding Beer,0.85
+2518,12,Sorghum and products,Cereals - Excluding Beer,1.41
+2520,13,"Cereals, Other",Cereals - Excluding Beer,3.8
+2531,162,Potatoes and products,Starchy Roots,19.36
+2532,157,Cassava and products,Starchy Roots,11.05
+2533,165,Sweet potatoes,Starchy Roots,12.36
+2534,153,"Roots, Other",Starchy Roots,7.63
+2535,169,Yams,Starchy Roots,7.93
+2546,81,Beans,Pulses,0.84
+2547,92,Peas,Pulses,1.75
+8501,84,Chickpeas,Pulses,1.05
+8502,85,Cowpeas,Pulses,0.68
+8503,87,Lentils,Pulses,1.28
+8531,86,"Pulses, Other and products",Pulses,0.75
+8504,77,Cashew,Treenuts,0.75
+8505,78,Almonds,Treenuts,1.56
+2551,91,Nuts and products,Treenuts,3.05
+2555,102,Soyabeans,Oilcrops,2.5
+2556,99,Groundnuts (Shelled Eq),Oilcrops,1.7
+2557,105,Sunflower seed,Oilcrops,1.73
+2558,105,Rape and Mustardseed,Oilcrops,2.01
+2559,106,Cottonseed,Oilcrops,0.1
+2560,98,Coconuts - Incl Copra,Oilcrops,5.16
+2561,104,Sesame seed,Oilcrops,0.6
+2562,98,Palm kernels,Oilcrops,0
+2563,103,Olives (including preserved),Oilcrops,2.14
+2570,108,"Oilcrops, Other",Oilcrops,2.16
+2571,107,Soyabean Oil,Vegetable Oils,2.5
+2572,112,Groundnut Oil,Vegetable Oils,1.7
+2573,109,Sunflowerseed Oil,Vegetable Oils,1.73
+2574,108,Rape and Mustard Oil,Vegetable Oils,2.01
+2575,111,Cottonseed Oil,Vegetable Oils,0.1
+2576,116,Palmkernel Oil,Vegetable Oils,0.1
+2577,108,Palm Oil,Vegetable Oils,0.1
+2578,115,Coconut Oil,Vegetable Oils,5.16
+2579,118,Sesameseed Oil,Vegetable Oils,0.6
+2580,113,Olive Oil,Vegetable Oils,2.14
+2581,117,Ricebran Oil,Vegetable Oils,4.51
+2582,114,Maize Germ Oil,Vegetable Oils,5.46
+2586,108,"Oilcrops Oil, Other",Vegetable Oils,2.16
+2601,188,Tomatoes and products,Vegetables,34.15
+2602,3,Onions,Vegetables,18.04
+8506,223,Leafy greens,Vegetables,14.07
+8507,179,Cucumber,Vegetables,34.68
+8508,198,Cabbage,Vegetables,28.82
+8509,180,Eggplant,Vegetables,26.36
+8510,156,Carrot,Vegetables,33.32
+8511,183,Chillies,Vegetables,16.21
+8512,213,Lettuce,Vegetables,21.52
+8513,186,Squash,Vegetables,13.25
+8514,1,Garlic,Vegetables,16.96
+8515,175,Cauliflower and Broccoli,Vegetables,18.87
+8516,220,Spinach,Vegetables,25.31
+8517,144,Mushroom,Vegetables,377.5
+8518,182,Okra,Vegetables,5.26
+8519,193,Asparagus,Vegetables,5.42
+8520,4,Spring onion and shallot,Vegetables,22.7
+8521,2,"Leeks, other allium",Vegetables,16.91
+8532,193,"Vegetables, Other",Vegetables,5.42
+2611,61,"Oranges, Mandarines",Fruits - Excluding Wine,17.79
+2612,53,"Lemons, Limes and products",Fruits - Excluding Wine,15.37
+2613,48,Grapefruit and products,Fruits - Excluding Wine,26.46
+2614,76,"Citrus, Other",Fruits - Excluding Wine,12.08
+2615,38,Bananas,Fruits - Excluding Wine,20.91
+2616,67,Plantains,Fruits - Excluding Wine,7.15
+2617,35,Apples and products,Fruits - Excluding Wine,16.05
+2618,30,Pineapples and products,Fruits - Excluding Wine,24.55
+2619,44,Dates,Fruits - Excluding Wine,6.48
+2620,80,Grapes and products (excl wine),Fruits - Excluding Wine,10.8
+8522,33,Watermelon,Fruits - Excluding Wine,32.18
+8523,58,Mango,Fruits - Excluding Wine,7.97
+8524,59,Melon,Fruits - Excluding Wine,25.4
+8525,32,Strawberry,Fruits - Excluding Wine,21.31
+8526,37,Avocados,Fruits - Excluding Wine,9.22
+8527,51,Kiwi fruit,Fruits - Excluding Wine,14.46
+8528,42,Cherries,Fruits - Excluding Wine,5.45
+8529,31,"Berries, Other",Fruits - Excluding Wine,6.31
+8533,65,"Fruits, Other",Fruits - Excluding Wine,15.91
+2536,225,Sugar cane,Sugar Crops,70.66
+2537,225,Sugar beet,Sugar Crops,7.79
+2541,225,Sugar non-centrifugal,Sugar & Sweeteners,70.66
+2542,225,Sugar (Raw Equivalent),Sugar & Sweeteners,70.66
+2543,225,"Sweeteners, Other",Sugar & Sweeteners,70.66
+2745,226,Honey,Sugar & Sweeteners,70
+2640,232,Pepper,Spices,0.91
+2641,231,Pimento,Spices,2.13
+2642,233,Cloves,Spices,0.24
+8530,159,Ginger,Spices,6.56
+8534,233,"Spices, Other",Spices,0.91
+2630,229,Coffee and products,Stimulants,0.84
+2633,229,Cocoa Beans and products,Stimulants,0.44
+2635,229,Tea (including mate),Stimulants,1.47
+2655,236,Wine,Alcoholic Beverages,0.1
+2656,234,Beer,Alcoholic Beverages,0.1
+2657,235,"Beverages, Fermented",Alcoholic Beverages,0.1
+2658,237,"Beverages, Alcoholic",Alcoholic Beverages,0.1
+2731,119,Bovine Meat,Meat,0.1
+2732,129,Mutton & Goat Meat,Meat,0.1
+2733,132,Pigmeat,Meat,0.1
+2734,134,Poultry Meat,Meat,0.1
+2735,140,"Meat, Other",Meat,0.1
+2736,141,"Offals, Edible",Offals,0.1
+2737,142,"Fats, Animals, Raw",Animal fats,0.1
+2740,20,"Butter, Ghee",Animal fats,0.1
+2743,21,Cream,Animal fats,0.1
+2744,15,Eggs,Eggs,0.1
+2761,22,Freshwater Fish,"Fish, Seafood",0.1
+2762,22,Demersal Fish,"Fish, Seafood",0.1
+2763,22,Pelagic Fish,"Fish, Seafood",0.1
+2764,22,"Marine Fish, Other","Fish, Seafood",0.1
+2765,171,Crustaceans,"Fish, Seafood",0.1
+2766,172,Cephalopods,"Fish, Seafood",0.1
+2767,172,"Molluscs, Other","Fish, Seafood",0.1
+2768,174,"Meat, Aquatic Mammals","Aquatic Products, Other",0.1
+2769,174,"Aquatic Animals, Others","Aquatic Products, Other",0.1
+2775,174,Aquatic Plants,"Aquatic Products, Other",0.1
+2781,143,"Fish, Body Oil",Animal fats,0.1
+2782,143,"Fish, Liver Oil",Animal fats,0.1
+2848,18,Milk - Excluding Butter,Milk - Excluding Butter,0.1
