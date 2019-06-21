@@ -5,7 +5,6 @@ import numpy as np
 isloaded = False
 tables = {}
 table_filenames = {'nutrition':'USDA_nutrition.csv',
-                   'food_group':'diet_foodgroups.csv',
                    'food_item':'FAO_USDA_item_map.csv',
                    'diets_global':'global_diets.csv',
                    'food_group_sgp':'food_group_sgp.csv',
