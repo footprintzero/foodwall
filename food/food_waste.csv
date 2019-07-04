@@ -1,0 +1,20 @@
+classification,component,process,waste pct
+food groups,01 cereal refined,spoilage,0.02
+food groups,02 cereal wholegrain,spoilage,0.02
+food groups,03 fruit,spoilage,0.3
+food groups,04 vegetable,spoilage,0.32
+food groups,05 animal,spoilage,0.13
+nutrition,carbs,cooking preparation,0.1
+nutrition,fats,cooking preparation,0.1
+nutrition,protein,cooking preparation,0.2
+nutrition,fiber,cooking preparation,0.3
+nutrition,minerals,cooking preparation,0.2
+nutrition,water,cooking preparation,0.15
+nutrition,kcal,cooking preparation,0.15
+nutrition,carbs,serving,0.3
+nutrition,fats,serving,0.1
+nutrition,protein,serving,0.05
+nutrition,fiber,serving,0.3
+nutrition,minerals,serving,0.2
+nutrition,water,serving,0.2
+nutrition,kcal,serving,0.2

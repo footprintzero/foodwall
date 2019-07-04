@@ -18,7 +18,7 @@ id,nutrition id,name,group,yield
 8501,84,Chickpeas,Pulses,1.05
 8502,85,Cowpeas,Pulses,0.68
 8503,87,Lentils,Pulses,1.28
-8531,86,"Pulses, Other and products",Pulses,0.75
+2549,86,"Pulses, Other and products",Pulses,0.75
 8504,77,Cashew,Treenuts,0.75
 8505,78,Almonds,Treenuts,1.56
 2551,91,Nuts and products,Treenuts,3.05
@@ -63,7 +63,7 @@ id,nutrition id,name,group,yield
 8519,193,Asparagus,Vegetables,5.42
 8520,4,Spring onion and shallot,Vegetables,22.7
 8521,2,"Leeks, other allium",Vegetables,16.91
-8532,193,"Vegetables, Other",Vegetables,5.42
+2605,193,"Vegetables, Other",Vegetables,5.42
 2611,61,"Oranges, Mandarines",Fruits - Excluding Wine,17.79
 2612,53,"Lemons, Limes and products",Fruits - Excluding Wine,15.37
 2613,48,Grapefruit and products,Fruits - Excluding Wine,26.46
@@ -82,7 +82,7 @@ id,nutrition id,name,group,yield
 8527,51,Kiwi fruit,Fruits - Excluding Wine,14.46
 8528,42,Cherries,Fruits - Excluding Wine,5.45
 8529,31,"Berries, Other",Fruits - Excluding Wine,6.31
-8533,65,"Fruits, Other",Fruits - Excluding Wine,15.91
+2625,65,"Fruits, Other",Fruits - Excluding Wine,15.91
 2536,225,Sugar cane,Sugar Crops,70.66
 2537,225,Sugar beet,Sugar Crops,7.79
 2541,225,Sugar non-centrifugal,Sugar & Sweeteners,70.66
@@ -93,7 +93,7 @@ id,nutrition id,name,group,yield
 2641,231,Pimento,Spices,2.13
 2642,233,Cloves,Spices,0.24
 8530,159,Ginger,Spices,6.56
-8534,233,"Spices, Other",Spices,0.91
+2645,233,"Spices, Other",Spices,0.91
 2630,229,Coffee and products,Stimulants,0.84
 2633,229,Cocoa Beans and products,Stimulants,0.44
 2635,229,Tea (including mate),Stimulants,1.47
