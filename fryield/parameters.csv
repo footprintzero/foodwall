@@ -1,0 +1,5 @@
+group,parameter,units,value
+vegetative,cycletime_vegetative,weeks,5
+reproductive,cycletime_reproductive,weeks,45
+vegetative,hazardrate_vegetative,pct / week,0.01
+reproductive,hazardrate_reproductive,pct / week,0.005
