@@ -2,9 +2,7 @@ import pandas as pd
 import numpy as np
 import math as m
 
-robot_parameters = {'num_robots': 4,
-                    'num_lights': 16,
-                    'num_towers': 183,
+robot_parameters = {'num_towers': 183,
                     'operation_hours': 18,
                     'fruit_plant_day': .56,
                     'robot_cycle_time': 3,
@@ -12,7 +10,7 @@ robot_parameters = {'num_robots': 4,
 
 working_params = {}
 
-
+#hi
 def update(params=None):
     setup()
     if params is not None:
@@ -21,18 +19,28 @@ def update(params=None):
     run()
 
 
-result = {'cap',
-          'op',
-          'numR',
-          'numL'}
+result = {'cap': 0,
+          'op': 0,
+          'numR': 0,
+          'numL': 0,
+          }
 
 
 def run():
     global result
-    result['cap'] = cap_cost(working_params['num_robots', 'num_lights'])
-    result['op'] = op_cost(working_params['num_robots', 'num_lights', 'kw_price', 'operation_hours'])
-    result['numR', 'numL'] = units_needed(working_params['num_towers', 'fruit_plant_day', 'operation_hours',
-                                                         'robot_cycle_time'])
+    result['numR'] = units_needed(working_params['num_towers'],
+                                  working_params['fruit_plant_day'],
+                                  working_params['operation_hours'],
+                                  working_params['robot_cycle_time'])[0]
+    result['numL'] = units_needed(working_params['num_towers'],
+                                  working_params['fruit_plant_day'],
+                                  working_params['operation_hours'],
+                                  working_params['robot_cycle_time'])[1]
+    result['cap'] = cap_cost(result['numR'], result['numL'])
+    result['op'] = op_cost(result['numR'],
+                           result['numL'],
+                           working_params['kw_price'],
+                           working_params['operation_hours'])
 
 
 def setup():
@@ -40,11 +48,10 @@ def setup():
     working_params = robot_parameters
 
 
-results_dictionary ={}
 def results():
-    run()
-    global results_dictionary
-    results_dictionary.pd.append(result)
+    update()
+    return result
+
 
 def units_needed(num_towers, fruit_plant_day, operation_hours, robot_cycle_time):
     # robot cycle time is how many minutes to pick one fruit
@@ -55,7 +62,7 @@ def units_needed(num_towers, fruit_plant_day, operation_hours, robot_cycle_time)
     return num_robots_needed, num_lights_needed
 
 
-def cap_cost(num_robots,num_lights):
+def cap_cost(num_robots, num_lights):
     arms_cost = 20000
     computer_cost = 2000
     scanner_cost = 1000
