@@ -18,6 +18,9 @@ def update(params=None):
         for p in params:
             working_params[p] = params[p]
     run()
+    response = working_params.copy()
+    response.update(result)
+    return response
 
 
 result = {'cap': 0,

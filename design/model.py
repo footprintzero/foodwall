@@ -2,20 +2,32 @@ import fryield.model as plants
 import pyppfd.solar as light
 import robot.model as rbt
 import towers.model as tower
+import structure.model as structure
 import pandas as pd
 
 cases = []
 report = None
 
 default_params = {'light':{},
-          'tower':{},
+          'tower':{'facade_L':150},
           'plants':{'fr_harvest_weeks':40,'yield_units':'g'},
           'robot':{},
           'config':{'period':'A'},
+          'structure':{'num_floors':1,'height_m':2.8},
           }
 
 case_params = {}
 
+def run_cases(cases):
+    global report
+    for c in cases:
+        for x in c:
+            if not c[x] == {}:
+                for k in c[x]:
+                    case_params[x][k] = c[x][k]
+        update()
+        c.update(case_params)
+    report = pd.DataFrame.from_records(cases)
 
 def setup():
     global case_params, default_parameters
@@ -24,19 +36,23 @@ def setup():
 
 def update(params=None):
     setup()
+    global case_params
     if params is not None:
         for p in params:
             case_params[p] = params[p]
     run()
+    return case_params.copy()
 
 def run():
-    light.update(case_params['light'])
-    tower.update(case_params['tower'])
+    case_params['light'] = light.update(case_params['light'])
+    case_params['structure'] = structure.update(case_params['structure'])
+    case_params['tower'] = tower.update(case_params['tower'])
     plants.update(case_params['plants'])
     robot_update()
 
 
 def robot_update(case_params):
+    case_params['robot']['num_towers'] = case_params['tower']['num_towers']
     plant_params = case_params['plants'].copy()
     plant_params['yield_units'] = 'fruit'
     fryield = get_fruit_yield(plant_params)
