@@ -23,14 +23,90 @@ plant_parameters = {'leaf_th_nm':150,
                     'molar_ratio_photonCO2':22/3,
                     'biomass_g_molCO2':120,
                     'biomass_water':0.75,
+                    'fruit_g':40,
                     }
+
+organs = {'veg':{'roots':0.35,'stalk':0.325,'leaves':0.325,'flower-fruit':0},
+          'rep':{'roots':0.25,'stalk':0.275,'leaves':0.275,'flower-fruit':0.20},
+        }
 
 growth_parameters = {'veg':{'loss':0.2,'root_shoot':0.35,'flower-fruit':0,'stalk':0.50},
                      'rep':{'loss':0.2,'root_shoot':0.35,'flower-fruit':0.35,'stalk':0.50},
+                     'fr_harvest_weeks':40,
+                     'size_g':{'veg':500,'rep':1200},
                     }
 
 table_filenames = {'params':'parameters.csv',
                    }
+
+default_params = {}
+
+case_params = {}
+
+
+def setup():
+    global case_params, default_parameters
+    case_params = default_params
+
+
+def update(params=None):
+    setup()
+    if params is not None:
+        for p in params:
+            case_params[p] = params[p]
+    run()
+
+
+def run():
+    pass
+
+def fruit_yield(dli,ccr,period='A',units='fruit',fr_wks=None,plant_g=None):
+    #fr/pl
+    global growth_parameters, photosynthesis_parameters, plant_parameters
+    stage='rep'
+    ps_eff=photosynthesis_parameters['ps_eff']
+    biomass_g = plant_parameters['biomass_g_molCO2']
+    fruit_g = plant_parameters['fruit_g']
+
+    la_cm2 = leaf_area_cm2(stage=stage,plant_g=plant_g)
+    ps_mpd = canopy_photosynthesis_rate(dli,ccr,ps_eff)
+    wet_ass_gpd = biomass_g*ps_mpd*la_cm2*(1/100)**2
+    sink_rep = growth_parameters[stage]['flower-fruit']
+    fr_gpd = wet_ass_gpd*sink_rep
+    if units =='fruit':
+        fr_d = fr_gpd/fruit_g
+    else:
+        fr_d = fr_gpd
+    if period == 'D':
+        fryield = fr_d
+    elif period == 'A':
+        if fr_wks is None:
+            fr_wks = growth_parameters['fr_harvest_weeks']
+        fryield = fr_d*fr_wks/52
+    return fryield
+
+
+def leaf_area_cm2(wt=None,stage='rep',plant_g=None):
+    if plant_g is None:
+        plant_g = plant_mass(stage)
+    if wt is None:
+        wt = plant_organ_wt('leaf',stage)
+    g_cm2 = leaf_density()
+    leaf_g = plant_g*wt
+    cm2 = leaf_g/g_cm2
+    return cm2
+
+
+def plant_organ_wt(organ='leaf',stage='rep'):
+    global organs
+    wt = organs[stage][organ]
+    return wt
+
+
+def plant_mass(stage='rep'):
+    plant_g = growth_parameters['size_g'][stage]
+    return plant_g
+
 
 def canopy_photosynthesis_rate(dli,ccr,ps_eff):
     #mol/m2/d
@@ -56,6 +132,7 @@ def sink_ratios(params=None,stg=None):
 
 
 def leaf_density(th_um=None,sg=None):
+    #g/cm2
     global CONSTANTS, plant_parameters
     if th_um is None:
         th_um = plant_parameters['leaf_th_nm']

@@ -6,12 +6,48 @@ pipe_IDs = {'0.5':1.6,'0.75':2,'1':25}
 models = {'hueristic_friction_head':{'a':3,'v0':1.7,'hf0':2.3},
           'losses':{'nozzle':150,'height':25},
           }
+
+greenhouse = {'transmissivity':0.8,
+              'leaf_ccr':0.6,
+        }
+
 tower = {'V_root_zone':8.65,
          'trays_per_tower':4,
          'void_fraction':0.3,
          'F_pipe_vol':0.1,
          'field_saturation':0.15
          }
+
+default_params = {}
+
+case_params = {}
+
+def setup():
+    global case_params, default_parameters
+    case_params = default_params
+
+
+def update(params=None):
+    setup()
+    if params is not None:
+        for p in params:
+            case_params[p] = params[p]
+    run()
+
+
+def run():
+    pass
+
+
+def greenhouse_transmissivity():
+    global greenhouse
+    return greenhouse['transmissivity']
+
+
+def leaf_ccr():
+    global greenhouse
+    return greenhouse['leaf_ccr']
+
 
 def pump_power(H_kPa,Q_LPM):
     W = H_kPa*1000*Q_LPM*1/60000
