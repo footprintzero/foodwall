@@ -26,6 +26,28 @@ CONSTANTS = {'Avogadro':6.023e+23,
 FILES = {'astm':BASE_DIR+'\\astm_g173_03.csv',
 }
 
+default_params = {}
+
+case_params = {}
+
+
+def setup():
+    global case_params, default_parameters
+    case_params = default_params
+
+
+def update(params=None):
+    setup()
+    if params is not None:
+        for p in params:
+            case_params[p] = params[p]
+    run()
+
+
+def run():
+    pass
+
+
 def day_light_integral(daylight_hpd=12,angle_max=90,cloud_cover=0.25,doy=90,resolution=100):
     global SOLAR_CONSTANT, photons
     load()
