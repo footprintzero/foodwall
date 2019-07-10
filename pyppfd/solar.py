@@ -42,6 +42,7 @@ def update(params=None):
         for p in params:
             case_params[p] = params[p]
     run()
+    return case_params.copy()
 
 
 def run():

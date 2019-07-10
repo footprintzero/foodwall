@@ -9,16 +9,35 @@ models = {'hueristic_friction_head':{'a':3,'v0':1.7,'hf0':2.3},
 
 greenhouse = {'transmissivity':0.8,
               'leaf_ccr':0.6,
-        }
+              }
 
 tower = {'V_root_zone':8.65,
-         'trays_per_tower':4,
          'void_fraction':0.3,
          'F_pipe_vol':0.1,
-         'field_saturation':0.15
+         'field_saturation':0.15,
          }
 
-default_params = {}
+default_params = {'height_m': 2.8,
+                  'width_m':1.5,
+                  'facade_L':330,
+                  'dia_cm': 21,
+                  'tray_height_cm': 62.5,
+                  'top_clearance_cm': 30,
+                  'tower_height_m': 2.5,
+                  'plants_per_tray': 3,
+                  'plant_spacing_cm': 65,
+                  'plant_clearance_cm': 29,
+                  'unit_length_m': 1.8,
+                  'trays_per_tower': 4,
+                  'plants_per_tower': 12,
+                  'unit_growth_area_m2': 4.5,
+                  'unit_floor_area_m2': 2.7,
+                  'num_towers': 183,
+                  'num_plants': 2196,
+                  'total_growth_area_m2': 823.5,
+                  'total_floor_area_m2': 494.1,
+                  'planting_density_pl_m2': 2.667,
+                  }
 
 case_params = {}
 
@@ -33,10 +52,81 @@ def update(params=None):
         for p in params:
             case_params[p] = params[p]
     run()
+    return case_params.copy()
 
 
 def run():
-    pass
+    c = case_params.copy()
+    tower_height_m = get_tower_height_m(c['height_m'],c['top_clearance_cm'])
+    trays_per_tower = get_trays_per_tower(tower_height_m, c['tray_height_cm'])
+    plants_per_tower = get_plants_per_tower(trays_per_tower,c['plants_per_tray'])
+    unit_length_m = get_unit_length_m(c['dia_cm'],c['plant_spacing_cm'],c['plant_clearance_cm'])
+    num_towers = total_towers(c['facade_L'] ,unit_length_m)
+    num_plants = total_plants(num_towers,plants_per_tower)
+    unit_growth_area_m2 = c['height_m']*unit_length_m
+    unit_floor_area_m2 = c['width_m']*unit_length_m
+    total_growth_area_m2 = num_towers*unit_growth_area_m2
+    total_floor_area_m2 = num_towers*unit_floor_area_m2
+    planting_density_pl_m2 = plants_per_tower/unit_growth_area_m2
+
+    case_params['tower_height_m'] = tower_height_m
+    case_params['trays_per_tower'] = trays_per_tower
+    case_params['plants_per_tower'] = plants_per_tower
+    case_params['unit_length_m'] = unit_length_m
+    case_params['num_towers'] = num_towers
+    case_params['num_plants'] = num_plants
+    case_params['unit_growth_area_m2'] = unit_growth_area_m2
+    case_params['unit_floor_area_m2'] = unit_floor_area_m2
+    case_params['total_growth_area_m2'] = total_growth_area_m2
+    case_params['total_floor_area_m2'] = total_floor_area_m2
+    case_params['planting_density_pl_m2'] = planting_density_pl_m2
+
+#input
+#'dia_cm': 21,
+#'tray_height_cm': 62.5,
+#'top_clearance_cm': 30,
+#'plants_per_tray': 3,
+#'plant_spacing_cm': 65,
+#'plant_clearance_cm': 29,
+
+#'unit_growth_area_m2': 4.5,
+#'unit_floor_area_m2': 2.7,
+#'total_growth_area_m2': 823.5,
+#'total_floor_area_m2': 494.1,
+#'planting_density_pl_m2': 2.667,
+
+#'tower_height_m': 2.5,
+#'trays_per_tower': 4,
+#'plants_per_tower': 12,
+#'unit_length_m': 1.8,
+#'num_towers': 183,
+#'num_plants': 2196,
+
+def total_plants(num_towers,plants_per_tower):
+    return num_towers*plants_per_tower
+
+
+def total_towers(facade_L,unit_length_m):
+    return math.floor(facade_L/unit_length_m)
+
+
+def get_unit_length_m(dia,spacing,clearance):
+    return (spacing*2+dia+clearance)/100
+
+
+def get_plants_per_tower(trays_per_tower,plants_per_tray):
+    ppt = trays_per_tower*plants_per_tray
+    return ppt
+
+
+def get_trays_per_tower(tower_height_m,tray_height_cm):
+    tpt = math.floor(tower_height_m * 100 / tray_height_cm)
+    return tpt
+
+
+def get_tower_height_m(floor_height_m,clearance_cm):
+    height_m = floor_height_m-clearance_cm/100
+    return height_m
 
 
 def greenhouse_transmissivity():
@@ -70,9 +160,10 @@ def pipe_loss_analysis(N,tpump,l0,params=None):
     return df
 
 def irrigation_volume(p=None):
-    global tower
+    global tower, case_params
     if p is None:
         p = tower
+        p.update(case_params)
     VIrr = p['V_root_zone']*(p['void_fraction']+p['field_saturation'])*(1+
             p['F_pipe_vol'])*p['trays_per_tower']
     return VIrr
