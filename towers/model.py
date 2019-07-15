@@ -7,10 +7,6 @@ models = {'hueristic_friction_head':{'a':3,'v0':1.7,'hf0':2.3},
           'losses':{'nozzle':150,'height':25},
           }
 
-greenhouse = {'transmissivity':0.8,
-              'leaf_ccr':0.6,
-              }
-
 tower = {'V_root_zone':8.65,
          'void_fraction':0.3,
          'F_pipe_vol':0.1,
@@ -21,7 +17,7 @@ default_params = {'height_m': 2.8,
                   'width_m':1.5,
                   'facade_L':330,
                   'dia_cm': 21,
-                  'tray_height_cm': 62.5,
+                  'plant_hw': 1,
                   'top_clearance_cm': 30,
                   'tower_height_m': 2.5,
                   'plants_per_tray': 3,
@@ -58,7 +54,7 @@ def update(params=None):
 def run():
     c = case_params.copy()
     tower_height_m = get_tower_height_m(c['height_m'],c['top_clearance_cm'])
-    trays_per_tower = get_trays_per_tower(tower_height_m, c['tray_height_cm'])
+    trays_per_tower = get_trays_per_tower(tower_height_m, c['plant_spacing_cm'],c['plant_hw'])
     plants_per_tower = get_plants_per_tower(trays_per_tower,c['plants_per_tray'])
     unit_length_m = get_unit_length_m(c['dia_cm'],c['plant_spacing_cm'],c['plant_clearance_cm'])
     num_towers = total_towers(c['facade_L'] ,unit_length_m)
@@ -81,26 +77,6 @@ def run():
     case_params['total_floor_area_m2'] = total_floor_area_m2
     case_params['planting_density_pl_m2'] = planting_density_pl_m2
 
-#input
-#'dia_cm': 21,
-#'tray_height_cm': 62.5,
-#'top_clearance_cm': 30,
-#'plants_per_tray': 3,
-#'plant_spacing_cm': 65,
-#'plant_clearance_cm': 29,
-
-#'unit_growth_area_m2': 4.5,
-#'unit_floor_area_m2': 2.7,
-#'total_growth_area_m2': 823.5,
-#'total_floor_area_m2': 494.1,
-#'planting_density_pl_m2': 2.667,
-
-#'tower_height_m': 2.5,
-#'trays_per_tower': 4,
-#'plants_per_tower': 12,
-#'unit_length_m': 1.8,
-#'num_towers': 183,
-#'num_plants': 2196,
 
 def total_plants(num_towers,plants_per_tower):
     return num_towers*plants_per_tower
@@ -119,24 +95,14 @@ def get_plants_per_tower(trays_per_tower,plants_per_tray):
     return ppt
 
 
-def get_trays_per_tower(tower_height_m,tray_height_cm):
-    tpt = math.floor(tower_height_m * 100 / tray_height_cm)
+def get_trays_per_tower(tower_height_m,plant_spacing_cm,plant_hw):
+    tpt = math.floor(tower_height_m * 100 / (plant_hw*plant_spacing_cm))
     return tpt
 
 
 def get_tower_height_m(floor_height_m,clearance_cm):
     height_m = floor_height_m-clearance_cm/100
     return height_m
-
-
-def greenhouse_transmissivity():
-    global greenhouse
-    return greenhouse['transmissivity']
-
-
-def leaf_ccr():
-    global greenhouse
-    return greenhouse['leaf_ccr']
 
 
 def pump_power(H_kPa,Q_LPM):
