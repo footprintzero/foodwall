@@ -6,6 +6,7 @@ default_params = {'num_floors':1,
                   'width_m':1.5,
                   'building_L':1.5,
                   'building_W':1.5,
+                  'wall_transmissivity':0.8,
                   }
 
 case_params = {}
