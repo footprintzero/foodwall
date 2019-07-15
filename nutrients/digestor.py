@@ -8,6 +8,9 @@ digestate = None
 
 parameters = {}
 
+def update(params):
+    pass
+
 def set_feed(diet='sgp',d=None):
     global feed
     if diet == 'sgp':
