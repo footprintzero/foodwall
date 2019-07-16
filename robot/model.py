@@ -2,20 +2,28 @@ import pandas as pd
 import numpy as np
 import math as m
 
+SUBGROUPS = ['prices','capex','opex']
+
 robot_parameters = {'num_towers': 183,
                     'operation_hours': 18,
-                    'fruit_plant_day': .56,
+                    'trays_per_tower': 4,
+                    'fruit_pl_d_day': .56,
                     'robot_rate': 20,
-                    'kw_price': .18,
-                    'indirect_fixed': 100}
+                    'indirect_fixed': 100,
+                    'prices':{'electricity_kwh':0.18},
+                    }
 
 working_params = {}
 
 
 def update(params=None):
+    global SUBGROUPS
     setup()
     if params is not None:
         for p in params:
+            if p in SUBGROUPS:
+                for s in params[p]:
+                    working_params[p][s] = params[p][s]
             working_params[p] = params[p]
     run()
     response = working_params.copy()
@@ -23,24 +31,25 @@ def update(params=None):
     return response
 
 
-result = {'cap': 0,
-          'op': 0,
-          'numR': 0,
+result = {'numR': 0,
           'numL': 0,
+          'capex': {'total_USD': 0},
+          'opex': {'total_USD': 0},
           }
 
 
 def run():
     global result
     (numR, numL) = units_needed(working_params['num_towers'],
-                                working_params['fruit_plant_day'],
+                                working_params['trays_per_tower'],
+                                working_params['fruit_pl_d_day'],
                                 working_params['operation_hours'],
                                 working_params['robot_rate'])
     result.update({'numL': numL, 'numR': numR})
-    result['cap'] = cap_cost(result['numR'], result['numL'])
-    result['op'] = op_cost(result['numR'],
+    result['capex']['total_USD'] = cap_cost(result['numR'], result['numL'])
+    result['opex']['total_USD'] = op_cost(result['numR'],
                            result['numL'],
-                           working_params['kw_price'],
+                           working_params['prices']['electricity_kwh'],
                            working_params['operation_hours'],
                            working_params['indirect_fixed'])
 
@@ -58,11 +67,12 @@ def run_cases(cases):
         c.update(result)
 
 
-def units_needed(num_towers, fruit_plant_day, operation_hours, robot_rate):
+def units_needed(num_towers, trays_per_tower, fruit_plant_day, operation_hours, robot_rate):
     # robot fruit rate = fruits it can pick per hour
     fruits = num_towers*fruit_plant_day*12
-    num_robots_needed = int(4*(m.ceil((float(fruits/(robot_rate*operation_hours))/4))))
-    num_lights_needed = 4*num_robots_needed
+    num_robots_needed = int(trays_per_tower*(m.ceil((
+            float(fruits/(robot_rate*operation_hours))/trays_per_tower))))
+    num_lights_needed = trays_per_tower*num_robots_needed
     return num_robots_needed, num_lights_needed
 
 

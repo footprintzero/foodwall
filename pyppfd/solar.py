@@ -26,14 +26,18 @@ CONSTANTS = {'Avogadro':6.023e+23,
 FILES = {'astm':BASE_DIR+'\\astm_g173_03.csv',
 }
 
-default_params = {}
+default_params = {'angle_max':90,
+                  'daylight_hrs':12,
+                  'cloud_cover':0.25,
+                  'ps_dli': 72,
+                  }
 
 case_params = {}
 
 
 def setup():
     global case_params, default_parameters
-    case_params = default_params
+    case_params = default_params.copy()
 
 
 def update(params=None):
@@ -46,10 +50,20 @@ def update(params=None):
 
 
 def run():
-    pass
+    global case_params
+    c = case_params.copy()
+    daylight_hrs = c['daylight_hrs']
+    angle_max = c['angle_max']
+    cloud_cover = c['cloud_cover']
+    ps_dli = day_light_integral(daylight_hpd=daylight_hrs,angle_max=angle_max,cloud_cover=cloud_cover)
+    insolence_W_m2 = insolence_daily(daylight_hpd=daylight_hrs,angle_max=angle_max,cloud_cover=cloud_cover)
+
+    case_params['ps_dli'] = ps_dli
+    case_params['insolence_W_m2'] = insolence_W_m2
 
 
 def day_light_integral(daylight_hpd=12,angle_max=90,cloud_cover=0.25,doy=90,resolution=100):
+    #mol/m2/d
     global SOLAR_CONSTANT, photons
     load()
     nm = CONSTANTS['PPFD_nm']
@@ -63,6 +77,17 @@ def day_light_integral(daylight_hpd=12,angle_max=90,cloud_cover=0.25,doy=90,reso
     dli = global_rad*photon_ratio*daylight_hpd*3600*10**-6
     return dli
 
+def insolence_daily(daylight_hpd=12,angle_max=90,cloud_cover=0.25,doy=90,resolution=100):
+    #W/m2
+    global SOLAR_CONSTANT, photons
+    load()
+    angles = [angle_max/90*0.5*math.pi*x/resolution for x in range(resolution+1)]
+    ext = np.mean([extraterrestrial(a,doy) for a in angles])
+    diff_r = diffuse_ratio(atm_transmission(cloud_cover))
+    global_rad = (1-diff_r)*ext
+    insolence = global_rad*daylight_hpd/24
+    return insolence
+
 def spectrum_photon_energy(rad_measure='global',nm=None):
     load()
     watts = spd[rad_measure].sum()
@@ -73,21 +98,21 @@ def spectrum_photon_energy(rad_measure='global',nm=None):
     ratio = pfd/watts
     return ratio
 
-def insolance_daily(rad_measure='global',doy=0,nm=None,units='pfd',resolution=100):
-    global SOLAR_CONSTANT, photons, spd
-    load()
-    angles = [math.pi*x/resolution for x in range(resolution+1)]
-    ext = np.mean([extraterrestrial(a,doy) for a in angles])
-    if units=='pfd':
-        data = photons*10**6
-    elif units=='Watts':
-        data = spd
-    if nm is None:
-        rad = data[rad_measure].sum()
-    else:
-        rad = data.loc[nm[0]:nm[1]][rad_measure].sum()
-    dailyavg = ext*rad/SOLAR_CONSTANT
-    return dailyavg
+#def insolance_daily(rad_measure='global',doy=0,nm=None,units='pfd',resolution=100):
+#    global SOLAR_CONSTANT, photons, spd
+#    load()
+#    angles = [math.pi*x/resolution for x in range(resolution+1)]
+#    ext = np.mean([extraterrestrial(a,doy) for a in angles])
+#    if units=='pfd':
+#        data = photons*10**6
+#    elif units=='Watts':
+#        data = spd
+#    if nm is None:
+#        rad = data[rad_measure].sum()
+#    else:
+#        rad = data.loc[nm[0]:nm[1]][rad_measure].sum()
+#    dailyavg = ext*rad/SOLAR_CONSTANT
+#    return dailyavg
 
 
 def spectral_flux(nm,nm_1,spf,spf_1):
@@ -144,7 +169,7 @@ def diffuse_ratio(atm_trans):
 
 def atm_transmission(cloud_cover):
     #Equation (12) Spitters 1986
-    ratio = 0.2 + 0.56*cloud_cover
+    ratio = 0.2 + 0.56*(1-cloud_cover)
     return ratio
 
 

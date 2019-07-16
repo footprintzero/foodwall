@@ -12,6 +12,9 @@ table_filenames = {'params':'parameters.csv',
 CONSTANTS = {'water_g_cm3':1,
             }
 
+SUBGROUPS = ['prices','revenue']
+
+
 plant_parameters = {'leaf_th_nm':150,
                     'leaf_SG':1.05,
                     'leaf_density_g_cm2':0.01575,
@@ -32,13 +35,15 @@ growth_parameters = {'veg':{'loss':0.2,'root_shoot':0.35,'flower-fruit':0,'stalk
 
 biomass_sinks = {'loss':0.2,'roots':0.28,'stalk':0.12,'leaves':0.12,'fower-fruit':0.28}
 
-default_params = {'ps_ccr':0.6,
+default_params = {'prices':{'fruit_USD_kg':2.86},
+                  'ps_ccr': 0.6,
                   'tower_dia_cm':21,
                   'planting_density_pl_m2': 2.667,
                   'plant_spacing_cm': 65,
                   'plant_hw': 1,
                   'ps_ps_eff':0.14,
                   'ps_dli': 72,
+                  'yield_loss': 0.15,
                   'growth_rep_flower-fruit':0.35,
                   'growth_rep_loss':0.20,
                   'growth_rep_root':0.35,
@@ -53,8 +58,11 @@ default_params = {'ps_ccr':0.6,
                   'size_3l_g':40,
                   'size_mature_g':800,
                   'size_rep_g':1200,
-                  'tsp_max_daily':3,
+                  'tsp_max_daily':4,
                   'canopy_fill':0.75,
+                  'capex':{},
+                  'opex':{},
+                  'revenue':{'fruit_sale_USD_yr':46000},
                   }
 
 case_params = {}
@@ -66,9 +74,13 @@ def setup():
 
 
 def update(params=None):
+    global SUBGROUPS
     setup()
     if params is not None:
         for p in params:
+            if p in SUBGROUPS:
+                for s in params[p]:
+                    case_params[p][s] = params[p][s]
             case_params[p] = params[p]
     run()
     return case_params.copy()
@@ -111,8 +123,8 @@ def run():
     fruit_kg_yr = gfr_pl_d_year*num_plants*365/1000
     yield_kg_m2_yr = gfr_pl_d_year*365/1000*planting_density_pl_m2
 
-    fruit_pl_d_day = gfr_pl_d_day/plant_parameters['fruit_g']
-    fruit_plant_day = fruit_pl_d_day*fr_harvest_wk/52
+    rep_fruit_pl_d_day = gfr_pl_d_day/plant_parameters['fruit_g']
+    fruit_pl_d_day = rep_fruit_pl_d_day*fr_harvest_wk/52
 
     #nutrients
     threel_g = c['size_3l_g'] ;     mature_g = c['size_3l_g'] ; rep_g = c['size_rep_g']
@@ -120,6 +132,12 @@ def run():
     size_factor = avg_size_factor(threel_g,mature_g,rep_g,fr_harvest_wk,germination_wk)
     rep_total_n_mg_pl_d = nutrients_mg_pl_d(rep_ps_rate_molCO2_pl_d)['total_n']
     total_n_g_d = rep_total_n_mg_pl_d*num_plants*size_factor
+    tsp_mL_pl_d = rep_tsp_mL_pl_d*size_factor
+
+    #costs and revenue
+    yield_loss = c['yield_loss']
+    fruit_USD_kg = c['prices']['fruit_USD_kg']
+    fruit_sale_USD_yr = fruit_USD_kg*fruit_kg_yr*(1-yield_loss)
 
     case_params['ps_rate_molCO2_m2_d'] = ps_rate_molCO2_m2_d
     case_params['rep_ps_rate_molCO2_pl_d'] = rep_ps_rate_molCO2_pl_d
@@ -128,18 +146,21 @@ def run():
     case_params['rep_canopy_depth_cm'] = rep_canopy_depth_cm
     case_params['rep_leaf_coverage_index'] = rep_leaf_coverage_index
     case_params['rep_tsp_mL_pl_d'] = rep_tsp_mL_pl_d
+    case_params['tsp_mL_pl_d'] = tsp_mL_pl_d
     case_params['rep_tsp_L_d'] = rep_tsp_L_d
     case_params['rep_tsp_max_d'] = rep_tsp_max_d
 
     case_params['gfr_pl_d_day'] = gfr_pl_d_day
     case_params['gfr_pl_d_year'] = gfr_pl_d_year
     case_params['fruit_kg_yr'] = fruit_kg_yr
+    case_params['rep_fruit_pl_d_day'] = rep_fruit_pl_d_day
     case_params['fruit_pl_d_day'] = fruit_pl_d_day
-    case_params['fruit_plant_day'] = fruit_plant_day
     case_params['yield_kg_m2_yr'] = yield_kg_m2_yr
 
     case_params['rep_total_n_mg_pl_d'] = rep_total_n_mg_pl_d
     case_params['total_n_g_d'] = total_n_g_d
+
+    case_params['revenue']['fruit_sale_USD_yr'] = fruit_sale_USD_yr
 
 def nutrients_mg_pl_d(ps_molCO2_d,growth_params=None):
     nutrients = {'total_n':0}
