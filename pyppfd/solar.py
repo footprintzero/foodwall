@@ -23,7 +23,7 @@ CONSTANTS = {'Avogadro':6.023e+23,
              'PPFD_nm':[400,700],
              }
 
-FILES = {'astm':BASE_DIR+'\\astm_g173_03.csv',
+FILES = {'astm':os.path.join(BASE_DIR,'astm_g173_03.csv'),
 }
 
 default_params = {'angle_max':90,
