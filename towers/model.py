@@ -11,7 +11,12 @@ tower = {'V_root_zone':8.65,
          'void_fraction':0.3,
          'F_pipe_vol':0.1,
          'field_saturation':0.15,
+         'media_density_kg_L':0.39,
+         'towers_per_pump':20,
+         'pump_head_kPa':196,
          }
+
+SUBGROUPS = ['prices','energy','capex','opex']
 
 default_params = {'height_m': 2.8,
                   'width_m':1.5,
@@ -19,6 +24,7 @@ default_params = {'height_m': 2.8,
                   'dia_cm': 21,
                   'plant_hw': 1,
                   'top_clearance_cm': 30,
+                  'tsp_mL_pl_d': 220,
                   'tower_height_m': 2.5,
                   'plants_per_tray': 3,
                   'plant_spacing_cm': 65,
@@ -33,6 +39,15 @@ default_params = {'height_m': 2.8,
                   'total_growth_area_m2': 823.5,
                   'total_floor_area_m2': 494.1,
                   'planting_density_pl_m2': 2.667,
+                  'prices':{'PVC_dia21cm_USD_m':56,'PVC_90elbow_USD':4,
+                           'misc_item_USD':48,'acrylic_tray_USD':6,
+                           'leca_ball_USD_L':0.14,'PVC_dia20mm_USD_m':3.12,
+                           'electricity_kwh':0.18,'pump_USD':20},
+                  'energy':{'irrigation_kwh_yr':1000},
+                  'capex':{'towers_USD':40000,'unit_USD':200,
+                           'unit_tower_USD':0,'unit_pipe_USD':0,
+                           'unit_items_USD':0,'unit_pumps_USD':0},
+                  'opex':{'total':0,'irrigation_USD_yr':130},
                   }
 
 case_params = {}
@@ -43,10 +58,15 @@ def setup():
 
 
 def update(params=None):
+    global SUBGROUPS
     setup()
     if params is not None:
         for p in params:
-            case_params[p] = params[p]
+            if p in SUBGROUPS:
+                for s in params[p]:
+                    case_params[p][s] = params[p][s]
+            else:
+                case_params[p] = params[p]
     run()
     return case_params.copy()
 
@@ -77,10 +97,54 @@ def run():
     case_params['total_floor_area_m2'] = total_floor_area_m2
     case_params['planting_density_pl_m2'] = planting_density_pl_m2
 
+    financials_update(case_params)
+
+def financials_update(params):
+    global tower
+    prices = params['prices'].copy()
+    capex = params['capex'].copy()
+    opex = params['opex'].copy()
+
+    tower_tray_USD = tower_tray_cost_USD(prices,params['plants_per_tray'])
+    media_per_tray_USD = dry_media_cost(price_L=prices['leca_ball_USD_L'],
+        V_L=tower['V_root_zone'],void_fraction=tower['void_fraction'])
+    empty_tower_USD = prices['PVC_dia21cm_USD_m']*params['tower_height_m']
+    capex['unit_tower_USD'] = empty_tower_USD + \
+                              (tower_tray_USD+media_per_tray_USD)*params['trays_per_tower']
+    capex['unit_pipe_USD'] = 2*params['unit_length_m']*prices['PVC_dia20mm_USD_m']
+    capex['unit_items_USD'] = prices['misc_item_USD']
+    capex['unit_pumps_USD'] = math.ceil(1/tower['towers_per_pump'])*prices['pump_USD']
+
+    unit_components = ['unit_tower_USD','unit_pipe_USD','unit_items_USD','unit_pumps_USD']
+    capex['unit_USD'] = sum([capex[x] for x in unit_components])
+    capex['towers_USD'] = capex['unit_USD']*params['num_towers']
+
+    #opex
+    Q_LPM = params['tsp_mL_pl_d']*params['plants_per_tower']/1000*1/1440
+    irr_W = pump_power(H_kPa=tower['pump_head_kPa'],Q_LPM=Q_LPM)
+    irrigation_kwh_yr = irr_W*24*365/1000
+    case_params['energy']['irrigation_kwh_yr'] = irrigation_kwh_yr
+    opex['irrigation_USD_yr']=irrigation_kwh_yr*prices['electricity_kwh']
+    opex['total'] = sum([opex[x] for x in opex if not x == 'total'])
+
+    case_params['capex'] = capex
+    case_params['opex'] = opex
+
+
+def tower_tray_cost_USD(prices,plants_per_tray):
+    tray = prices['acrylic_tray_USD']
+    ports = prices['PVC_90elbow_USD']*plants_per_tray
+    tray_cost = tray+ports
+    return tray_cost
+
+
+def dry_media_cost(price_L,V_L,void_fraction):
+    media_L = V_L*(1-void_fraction)
+    media_cost = media_L*price_L
+    return media_cost
 
 def total_plants(num_towers,plants_per_tower):
     return num_towers*plants_per_tower
-
 
 def total_towers(facade_L,unit_length_m):
     return math.floor(facade_L/unit_length_m)
