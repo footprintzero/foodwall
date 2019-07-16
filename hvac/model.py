@@ -45,7 +45,8 @@ def setup():
     working_params = hvac_parameters
 
 def run():
-    tbd
+    pass
+    #tbd
 
 
 def run_cases(cases):
@@ -73,21 +74,26 @@ def update(params=None):
 
 
 def get_total_btu():
+    pass
     #find transpiration btu from transpiration rate, find sunlight btu from sun model, find outside btu from ambient cond
 
 
 
 def get_total_kwh():
+    pass
     #sum all kwh from all systems of hvac and include additional factors
 
 
 def get_psy():
+    pass
     #psychrometric conditions
 
 
 def cap_cost():
+    pass
     #cap cost
 
 
 def op_cost():
+    pass
     #op cost
