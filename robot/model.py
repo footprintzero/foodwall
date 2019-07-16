@@ -98,3 +98,6 @@ def op_cost(num_robots, num_lights, kw_price, operation_hours, indirect_fixed):
 
 
 
+
+
+
