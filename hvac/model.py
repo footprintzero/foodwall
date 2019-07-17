@@ -1,7 +1,6 @@
 import pandas as pd
 import math as m
-import psypy as psy
-
+import psypy.psySI as si
 hvac_parameters = {'duct':
                         {'duct_length': 330,
                          'duct_csa': .5,
@@ -23,15 +22,26 @@ hvac_parameters = {'duct':
                          'cop': 3.5,
                          'kwh_per_day': 1200,
                          'dess_factor': 'unknown',
-                         'solar_factor': 'unknown',
-                         'transpiration_btu': 1365000,
-                         'sunlight_btu': 'unknown',
+                         't_rate': .0006, #transpiration rate in L/min/plant
+                         'insolence': .25047, #light in kw/m2
+                         'rf':.1, #reflection factor constant
+                         'u':3, #heat transfer constant for pmma
                          'outside_btu': 118680,
                          'cfm': '.0333 cfm/btu',
-                         'supply_temp': 'unknown',
-                         'supply_humidity': 'unknown',
-                         'return_temp': 25,
-                         'return_humidity': 60
+                         's_temp_d': 'unknown',
+                         's_humidity_d': 'unknown',
+                         's_temp_n': 'unknown',
+                         's_humidity_n': 'unknown',
+                         'i_temp_d': 27,
+                         'i_humidity_d': 75,
+                         'i_temp_n': 25,
+                         'i_humidity_n': 85,
+                         'a_temp_d':32,
+                         'a_humidity_d':70,
+                         'a_temp_n': 32,
+                         'a_humidity_n': 70,
+                         'length_of_day':12,
+                         'length_of_night':12
                          },
                    'capex':{},
                    'opex':{}
@@ -61,8 +71,6 @@ def run_cases(cases):
     report = pd.DataFrame.from_records(cases)
 
 
-
-
 def update(params=None):
     setup()
     if params is not None:
@@ -72,28 +80,44 @@ def update(params=None):
     return working_params.copy()
 
 
+def get_supply_return_btu(t_rate, insolence, rf, i_temp, i_humidity, a_temp, a_humidity,
+                          f_hvac, f_nv, num_towers, p_tower, wall_a, roof_a, u, cop, daytime):
+    h_hat2 = si.state("DBT", a_temp, "RH", a_humidity, 101325)[1]
+    h_hat3 = si.state("DBT", i_temp, "RH", i_humidity, 101325)[1]
+    ah2 = si.state("DBT", a_temp, "RH", a_humidity, 101325)[4]
+    ah3 = si.state("DBT", i_temp, "RH", i_humidity, 101325)[4]
+    if daytime:
+        enthalpy_water = 2260
+        t_kw = t_rate*(enthalpy_water/60)*num_towers*p_tower
+        l_kw = insolence*(wall_a+roof_a)*rf
+        u_kw = (u*(wall_a+(2*roof_a))*(a_temp-i_temp))/1000
+        t_water = t_rate*(1/60)*num_towers*p_tower
+    else:
+        t_kw = 0
+        l_kw = 0
+        u_kw = (u*(wall_a+(2*roof_a))*(a_temp-i_temp))/1000
+        t_water = 0
+    h_return = h_hat3+(t_kw + l_kw + u_kw)/(f_hvac+f_nv)
+    h_supply = ((h_hat3*(f_hvac+f_nv))-(f_nv*h_hat2))/f_hvac
+    ah_return = ah3+(t_water/(f_nv+f_hvac))
+    ah_supply = ((ah3*(f_hvac+f_nv))-(f_nv*ah2))/f_hvac
 
-def get_total_btu():
-    pass
-    #find transpiration btu from transpiration rate, find sunlight btu from sun model, find outside btu from ambient cond
-
+    supply = si.state("H", h_supply,"W", ah_supply,101325)
+    (supply_temp, supply_humidity) = (supply[0], supply[2])
+    sreturn = si.state("H", h_return,"W", ah_return,101325)
+    (return_temp, return_humidity) = (sreturn[0], sreturn[2])
+    max_btu_required = ((f_hvac*(h_return-h_supply))/cop)*3412.142
+    return [supply_temp, supply_humidity, return_temp, return_humidity, max_btu_required]
 
 
 def get_total_kwh():
     pass
-    #sum all kwh from all systems of hvac and include additional factors
-
-
-def get_psy():
-    pass
-    #psychrometric conditions
 
 
 def cap_cost():
     pass
-    #cap cost
+
 
 
 def op_cost():
     pass
-    #op cost
