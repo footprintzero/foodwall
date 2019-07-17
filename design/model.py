@@ -4,7 +4,7 @@ import towers.model as tower
 import fryield.model as plants
 import robot.model as rbt
 import hvac.model as hvac
-import nutrients.digestor as nutrients
+import nutrients.digester as nutrients
 import pandas as pd
 
 cases = []
