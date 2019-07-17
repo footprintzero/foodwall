@@ -15,8 +15,8 @@ CONSTANTS = {'water_g_cm3':1,
 SUBGROUPS = ['prices','revenue']
 
 
-plant_parameters = {'leaf_th_nm':150,
-                    'leaf_SG':1.05,
+plant_parameters = {'leaf_th_nm':190,
+                    'leaf_SG':0.6,
                     'leaf_density_g_cm2':0.01575,
                     'molar_ratio_photonCO2':22/3,
                     'biomass_g_molCO2':120,
@@ -25,8 +25,8 @@ plant_parameters = {'leaf_th_nm':150,
                     'tsp_ratio_ml_molCO2':420,
                     }
 
-organs = {'veg':{'roots':0.35,'stalk':0.325,'leaves':0.325,'flower-fruit':0},
-          'rep':{'roots':0.25,'stalk':0.275,'leaves':0.275,'flower-fruit':0.20},
+organs = {'veg':{'roots':0.40,'stalk':0.33,'leaves':0.27,'flower-fruit':0},
+          'rep':{'roots':0.45,'stalk':0.25,'leaves':0.15,'flower-fruit':0.15},
         }
 
 growth_parameters = {'veg':{'loss':0.2,'root_shoot':0.35,'flower-fruit':0,'stalk':0.50},
@@ -44,17 +44,17 @@ default_params = {'prices':{'fruit_USD_kg':2.86},
                   'ps_ps_eff':0.14,
                   'ps_dli': 72,
                   'yield_loss': 0.15,
-                  'growth_rep_flower-fruit':0.35,
+                  'growth_rep_flower-fruit':0.25,
                   'growth_rep_loss':0.20,
-                  'growth_rep_root':0.35,
-                  'growth_rep_total_n':0.015,
+                  'growth_rep_root':0.40,
+                  'growth_rep_total_n':0.04,
                   'fr_harvest_wk':40,
                   'germination_wk':4,
                   'num_plants':2196,
-                  'amb_day_C':32,
-                  'amb_day_RH':70,
-                  'amb_night_C':27,
-                  'amb_night_RH':85,
+                  'pro_day_C':32,
+                  'pro_day_RH':70,
+                  'pro_night_C':27,
+                  'pro_night_RH':85,
                   'size_3l_g':40,
                   'size_mature_g':800,
                   'size_rep_g':1200,
@@ -131,7 +131,7 @@ def run():
     germination_wk = c['germination_wk']
     size_factor = avg_size_factor(threel_g,mature_g,rep_g,fr_harvest_wk,germination_wk)
     rep_total_n_mg_pl_d = nutrients_mg_pl_d(rep_ps_rate_molCO2_pl_d)['total_n']
-    total_n_g_d = rep_total_n_mg_pl_d*num_plants*size_factor
+    total_n_g_d = rep_total_n_mg_pl_d*num_plants*size_factor/1000
     tsp_mL_pl_d = rep_tsp_mL_pl_d*size_factor
 
     #costs and revenue
@@ -172,7 +172,7 @@ def nutrients_mg_pl_d(ps_molCO2_d,growth_params=None):
     assim_g_d = get_assim_pl_d(ps_molCO2_d)
     for n in nutrients:
         if n == 'total_n':
-            wt = case_params['growth_rep_total_n']
+            wt = case_params['growth_rep_total_n']*(1-plant_parameters['biomass_water'])
             nutrients['total_n'] = assim_g_d*growth*wt*1000
     return nutrients
 

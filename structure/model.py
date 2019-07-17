@@ -67,34 +67,39 @@ def run():
 
     case_params['capex'] = capex
 
+
 def get_beam_length(L,W,h,w,vb_space):
     interior_L = linear_length(L,W)
-    exterior_L = linear_length(L+w,W+w)
+    exterior_L = linear_length(L+2*w,W+2*w)
     facade_L = 0.5*(interior_L+exterior_L)
     vbeam_L = 4*h*math.ceil(facade_L/vb_space)
     total_L = vbeam_L+2*(interior_L+exterior_L)
     return total_L
 
+
 def greenhouse_m3(L, W,h,w,Nfl):
-    w_max = linear_length(L+w,W+w)*h*Nfl
-    w_min = linear_length(L,W)*h*Nfl
-    m3 = 0.5*(w_max+w_min)*w*Nfl
+    A = facade_GFA(L,W,w,Nfl)
+    m3 = A*h
     return m3
 
+
 def facade_wall_area(L, W,h,w,Nfl):
-    fl = linear_length(L+w,W+w)
+    fl = linear_length(L+2*w,W+2*w)
     m2 = fl*h*Nfl
     return m2
 
+
 def facade_GFA(L,W,w,Nfl):
-    fl = linear_length(L+0.5*w,W+0.5*w)
-    GFA = w*fl*Nfl
+    inner_A = L*W
+    outer_A = (L+2*w)*(W+2*w)
+    GFA = (outer_A-inner_A)*Nfl
     return GFA
 
 
 def linear_length(L,W):
     fl = 2*(L+W)
     return fl
+
 
 def building_GFA(L,W,Blfl):
     GFA = L*W*Blfl

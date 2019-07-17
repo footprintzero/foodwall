@@ -4,21 +4,21 @@ import towers.model as tower
 import fryield.model as plants
 import robot.model as rbt
 import hvac.model as hvac
-import nutrients.digestor as nutrients
+import nutrients.digester as nutrients
 import pandas as pd
 
 cases = []
 report = None
 
 default_params = {'light':{'angle_max':90,'cloud_cover':0.25,
-                           'daylight_hrs':12,'ps_dli':72,'insolence_W_m2':335},
-          'climate':{'amb_day_C':32,'amb_night_C':27,
-                     'amb_day_RH':70,'amb_night_RH':85,
+                           'daylight_hrs':10,'ps_dli':72,'insolence_W_m2':335},
+          'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':27,'pro_day_RH':75,
+                     'amb_day_RH':70,'amb_night_RH':85,'pro_night_C':25,'pro_night_RH':85,
                      'rainfall_mm_wk':40},
           'prices':{'electricity_kwh':0.18,'fruit_USD_kg':2.86},
           'structure':{'num_floors':1,'height_m':2.8,'building_L':150,'building_W':15},
           'tower':{'plant_spacing_cm':62,'plant_clearance_cm':35},
-          'plants':{'leaf_ccr':0.6,'fr_harvest_weeks':40,'rep_growth':0.35,
+          'plants':{'leaf_ccr':0.6,'fr_harvest_weeks':40,'rep_growth':0.25,
                     'tsp_mL_pl_d':220,'tsp_max_daily':4},
           'robot':{'num_towers': 183,'trays_per_tower': 4,'fruit_pl_d_day': .56},
           'conveyor':{},
@@ -98,7 +98,7 @@ def plants_update(params):
     plants_params['ps_dli'] = tsm*params['light']['ps_dli']
 
     #climate
-    climate_keys = ['amb_day_C','amb_day_RH','amb_night_C','amb_night_RH']
+    climate_keys = ['pro_day_C','pro_day_RH','pro_night_C','pro_night_RH']
     for k in climate_keys:
         plants_params[k] = params['climate'][k]
 
@@ -137,6 +137,7 @@ def financials_update(params):
     #capex['conveyor']
     #capex['hvac']
     #capex['nutrients']
+    capex['total'] = sum([capex[x] for x in capex if not x == 'total'])
 
     #opex
     opex['tower'] = params['tower']['opex']['total']
@@ -145,6 +146,7 @@ def financials_update(params):
     #capex['hvac']
     #capex['nutrients']
     #capex['maintenance']
+    opex['total'] = sum([opex[x] for x in opex if not x == 'total'])
 
     #revenue
     revenue['fruit'] = params['plants']['revenue']['fruit_sale_USD_yr']
@@ -165,7 +167,7 @@ def kpi_update(params):
                   'total_n_g_d','rep_tsp_L_d','rep_tsp_mL_pl_d','num_plants']
 
     for pk in plant_kpis:
-        kpi[pk] = params['plants']
+        kpi[pk] = params['plants'][pk]
 
     kpi['revenue'] = params['revenue']['total']
     kpi['opex'] = params['opex']['total']
