@@ -23,7 +23,11 @@ hvac_parameters = {
                    'insolence': .25047,  # light in kw/m2
                    'rf': .1,  # reflection factor constant
                    'u': 3,  # heat transfer constant for pmma
-                   'outside_btu': 118680,
+                   'roof_a':504,
+                   'wall_a':957.6,
+                   'num_towers': 184,
+                   'p_tower':12,
+                   'daytime':True,
                    'cfm': '.0333 cfm/btu',
                    's_temp_d': 'unknown',
                    's_humidity_d': 'unknown',
@@ -79,8 +83,9 @@ def update(params=None):
     return working_params.copy()
 
 
-def get_supply_btu(t_rate, insolence, rf, i_temp, i_humidity, a_temp, a_humidity,
-                   f_hvac_cfm, f_nv_cfm, num_towers, p_tower, wall_a, roof_a, u, daytime,interest):
+def get_supply(f_hvac_cfm,t_rate=.0006, insolence=.25047, rf=.1, i_temp=300.15, i_humidity=.65,
+               a_temp=305.15, a_humidity=.7,f_nv_cfm=0, num_towers=185,
+               p_tower=12, wall_a=957.6, roof_a=504, u=3, daytime=True):
     air_density = 1.2   # kg/m3
     f_hvac = f_hvac_cfm*(1/60)*.0283168*air_density  # convert to kg/s
     f_nv = f_nv_cfm*(1/60)*.0283168*air_density
@@ -99,21 +104,71 @@ def get_supply_btu(t_rate, insolence, rf, i_temp, i_humidity, a_temp, a_humidity
         l_kw = 0
         u_kw = (u*(wall_a+(2*roof_a))*(a_temp-i_temp))/1000
         t_water = 0
-    shr_ratio= (l_kw+u_kw)/t_kw
     h_hat3 = h_hat4 - ((t_kw + l_kw + u_kw)/(f_hvac+f_nv))
     h_supply = ((h_hat3 * (f_hvac + f_nv)) - (f_nv*h_hat2)) / f_hvac
     ah_3 = ah_4-(t_water/(f_nv+f_hvac))  # problem probably here
     ah_supply = ((ah_3*(f_hvac+f_nv))-(f_nv*ah_2))/f_hvac
-    #supply = si.state("H", h_supply,"W", ah_supply,101325)
-    #(supply_temp, supply_humidity) = (supply[0], supply[2])
-    #stream3_supply = si.state("H", h_hat3,"W", ah_3,101325)
-    #(s3supply_temp, s3supply_humidity) = (stream3_supply[0], stream3_supply[2])
+    supply = si.state("H", h_supply,"W", ah_supply,101325)
+    (supply_temp, supply_humidity) = (supply[0], supply[2])
     max_btu_required = (f_hvac*(h_hat4-h_supply))*3412.142
-    #interest1 = interest
-    #interest1 = 0
-    h_supply = h_hat4
-    return [ah_supply, h_supply, f_hvac_cfm, f_nv_cfm, max_btu_required]
+    return [supply_temp, supply_humidity, f_hvac_cfm, f_nv_cfm, max_btu_required]
 
+def hvac_wrapper_humidity(F,params):
+    t_rate = params['t_rate']
+    insolence = params['insolence']
+    rf = params['rf']
+    i_temp = params['i_temp']
+    i_humidity = params['i_humidity']
+    a_temp = params['a_temp']
+    a_humidity = params['a_humidity']
+    f_nv_cfm = params['f_nv_cfm']
+    num_towers = params['num_towers']
+    p_towers = params['p_towers']
+    wall_a = params['wall_a']
+    roof_a = params['roof_a']
+    u = params['u']
+    daytime = params['daytime']
+    results = get_supply(t_rate,insolence,rf,i_temp,i_humidity,a_temp,a_humidity,F,f_nv_cfm,num_towers,p_towers,wall_a,roof_a,u,daytime)
+    humidity = results[1]
+    return humidity
+
+def hvac_wrapper_temp(F,params):
+    t_rate = params['t_rate']
+    insolence = params['insolence']
+    rf = params['rf']
+    i_temp = params['i_temp']
+    i_humidity = params['i_humidity']
+    a_temp = params['a_temp']
+    a_humidity = params['a_humidity']
+    f_nv_cfm = params['f_nv_cfm']
+    num_towers = params['num_towers']
+    p_towers = params['p_towers']
+    wall_a = params['wall_a']
+    roof_a = params['roof_a']
+    u = params['u']
+    daytime = params['daytime']
+    results = get_supply(t_rate,insolence,rf,i_temp,i_humidity,a_temp,a_humidity,F,f_nv_cfm,num_towers,p_towers,wall_a,roof_a,u,daytime)
+    temp = results[0]
+    return temp
+
+
+def duct_fans_info(f_hvac_cfm,fan_speed=10,shape='square',building_lm=151.5,building_wm=16.5):
+    flow_metric = f_hvac_cfm*.000471947
+    csa_ducts = flow_metric/fan_speed
+    duct_m2 = 0
+    if shape == 'circle':
+        r = m.sqrt(csa_ducts/m.pi)
+        c_ducts = 2*r*m.pi
+        duct_m2 = c_ducts*2*(building_lm + building_wm)
+    elif shape == 'square':
+        r = m.sqrt(csa_ducts)
+        c_ducts = 4*r
+        duct_m2 = c_ducts*2*(building_lm + building_wm)
+    fan_kw = 0
+    num_vents = 4
+    num_il_fans = 3
+    duct_kg = duct_m2*6.86*2  # 6.86kg/m2 is standard galvanized steel sheet weight
+    return duct_kg, fan_kw, num_vents, num_il_fans
 
 
 def get_total_kwh(weeks,cop,max_btu_required,day_hours):
