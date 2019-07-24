@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import math as m
 
-SUBGROUPS = ['prices','capex','opex']
+SUBGROUPS = ['prices','energy','capex','opex']
 
 robot_parameters = {'num_towers': 183,
                     'operation_hours': 18,
