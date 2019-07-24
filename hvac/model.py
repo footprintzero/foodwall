@@ -4,7 +4,7 @@ import psypy.psySI as si
 
 SUBGROUPS = ['prices','energy','capex','opex']
 
-
+# hello world
 hvac_parameters = {
                    'duct_length': 330,
                    'booster fans': 20,
@@ -30,13 +30,13 @@ hvac_parameters = {
                    's_temp_n': 'unknown',
                    's_humidity_n': 'unknown',
                    'i_temp_d': 27,
-                   'i_humidity_d': .75,
+                   'i_humidity_d': .65,
                    'i_temp_n': 25,
-                   'i_humidity_n': .85,
+                   'i_humidity_n': .75,
                    'a_temp_d':32,
                    'a_humidity_d': .70,
-                   'a_temp_n': 32,
-                   'a_humidity_n': .70,
+                   'a_temp_n': 27,
+                   'a_humidity_n': .85,
                    'day_hours': 12,
                    'weeks': 40,
                    'prices': {},
@@ -80,7 +80,7 @@ def update(params=None):
 
 
 def get_supply_btu(t_rate, insolence, rf, i_temp, i_humidity, a_temp, a_humidity,
-                   f_hvac_cfm, f_nv_cfm, num_towers, p_tower, wall_a, roof_a, u, daytime):
+                   f_hvac_cfm, f_nv_cfm, num_towers, p_tower, wall_a, roof_a, u, daytime,interest):
     air_density = 1.2   # kg/m3
     f_hvac = f_hvac_cfm*(1/60)*.0283168*air_density  # convert to kg/s
     f_nv = f_nv_cfm*(1/60)*.0283168*air_density
@@ -99,21 +99,19 @@ def get_supply_btu(t_rate, insolence, rf, i_temp, i_humidity, a_temp, a_humidity
         l_kw = 0
         u_kw = (u*(wall_a+(2*roof_a))*(a_temp-i_temp))/1000
         t_water = 0
+    shr_ratio= (l_kw+u_kw)/t_kw
     h_hat3 = h_hat4 - ((t_kw + l_kw + u_kw)/(f_hvac+f_nv))
     h_supply = ((h_hat3 * (f_hvac + f_nv)) - (f_nv*h_hat2)) / f_hvac
-    ah_3 = ((ah_4*f_hvac)-t_water)/(f_nv+f_hvac)  # problem probably here
+    ah_3 = ah_4-(t_water/(f_nv+f_hvac))  # problem probably here
     ah_supply = ((ah_3*(f_hvac+f_nv))-(f_nv*ah_2))/f_hvac
-
-    supply = si.state("H", h_supply,"W", ah_supply,101325)
-    (supply_temp, supply_humidity) = (supply[0], supply[2])
-    stream3_supply = si.state("H", h_hat3,"W", ah_3,101325)
-    (s3supply_temp, s3supply_humidity) = (stream3_supply[0], stream3_supply[2])
-    print(s3supply_humidity)
+    #supply = si.state("H", h_supply,"W", ah_supply,101325)
+    #(supply_temp, supply_humidity) = (supply[0], supply[2])
+    #stream3_supply = si.state("H", h_hat3,"W", ah_3,101325)
+    #(s3supply_temp, s3supply_humidity) = (stream3_supply[0], stream3_supply[2])
     max_btu_required = (f_hvac*(h_hat4-h_supply))*3412.142
-    if supply_temp>i_temp or supply_humidity>1:
-        return 'error',supply_temp, supply_humidity, max_btu_required
-    else:
-        return [supply_temp, supply_humidity, max_btu_required]
+    #interest1 = interest
+    #interest1 = 0
+    return [ah_supply, h_supply, f_hvac_cfm, f_nv_cfm, max_btu_required]
 
 
 
