@@ -150,8 +150,7 @@ def hvac_wrapper_temp(F,params):
     results = get_supply(t_rate,insolence,rf,i_temp,i_humidity,a_temp,a_humidity,F,f_nv_cfm,num_towers,p_towers,wall_a,roof_a,u,daytime)
     temp = results[0]
     return temp
-
-
+  
 def duct_fans_info(f_hvac_cfm,fan_speed=10,shape='square',building_lm=151.5,building_wm=16.5):
     flow_metric = f_hvac_cfm*.000471947
     csa_ducts = flow_metric/fan_speed
@@ -169,7 +168,6 @@ def duct_fans_info(f_hvac_cfm,fan_speed=10,shape='square',building_lm=151.5,buil
     num_il_fans = 3
     duct_kg = duct_m2*6.86*2  # 6.86kg/m2 is standard galvanized steel sheet weight
     return duct_kg, fan_kw, num_vents, num_il_fans
-
 
 def get_total_kwh(weeks,cop,max_btu_required,day_hours):
     pass
