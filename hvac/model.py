@@ -111,6 +111,7 @@ def get_supply_btu(t_rate, insolence, rf, i_temp, i_humidity, a_temp, a_humidity
     max_btu_required = (f_hvac*(h_hat4-h_supply))*3412.142
     #interest1 = interest
     #interest1 = 0
+    h_supply = h_hat4
     return [ah_supply, h_supply, f_hvac_cfm, f_nv_cfm, max_btu_required]
 
 
