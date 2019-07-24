@@ -104,15 +104,54 @@ def get_supply_btu(t_rate, insolence, rf, i_temp, i_humidity, a_temp, a_humidity
     h_supply = ((h_hat3 * (f_hvac + f_nv)) - (f_nv*h_hat2)) / f_hvac
     ah_3 = ah_4-(t_water/(f_nv+f_hvac))  # problem probably here
     ah_supply = ((ah_3*(f_hvac+f_nv))-(f_nv*ah_2))/f_hvac
-    #supply = si.state("H", h_supply,"W", ah_supply,101325)
-    #(supply_temp, supply_humidity) = (supply[0], supply[2])
+    supply = si.state("H", h_supply,"W", ah_supply,101325)
+    (supply_temp, supply_humidity) = (supply[0], supply[2])
     #stream3_supply = si.state("H", h_hat3,"W", ah_3,101325)
     #(s3supply_temp, s3supply_humidity) = (stream3_supply[0], stream3_supply[2])
     max_btu_required = (f_hvac*(h_hat4-h_supply))*3412.142
     #interest1 = interest
     #interest1 = 0
-    return [ah_supply, h_supply, f_hvac_cfm, f_nv_cfm, max_btu_required]
+    return [supply_temp, supply_humidity, f_hvac_cfm, f_nv_cfm, max_btu_required]
 
+def hvac_wrapper_humidity(F,params):
+    t_rate = params['t_rate']
+    insolence = params['insolence']
+    rf = params['rf']
+    i_temp = params['i_temp']
+    i_humidity = params['i_humidity']
+    a_temp = params['a_temp']
+    a_humidity = params['a_humidity']
+    f_nv_cfm = params['f_nv_cfm']
+    num_towers = params['num_towers']
+    p_towers = params['p_towers']
+    wall_a = params['wall_a']
+    roof_a = params['roof_a']
+    u = params['u']
+    daytime = params['daytime']
+    interest = params['interest']
+    results = get_supply_btu(t_rate,insolence,rf,i_temp,i_humidity,a_temp,a_humidity,F,f_nv_cfm,num_towers,p_towers,wall_a,roof_a,u,daytime,interest)
+    humidity = results[1]
+    return humidity
+
+def hvac_wrapper_temp(F,params):
+    t_rate = params['t_rate']
+    insolence = params['insolence']
+    rf = params['rf']
+    i_temp = params['i_temp']
+    i_humidity = params['i_humidity']
+    a_temp = params['a_temp']
+    a_humidity = params['a_humidity']
+    f_nv_cfm = params['f_nv_cfm']
+    num_towers = params['num_towers']
+    p_towers = params['p_towers']
+    wall_a = params['wall_a']
+    roof_a = params['roof_a']
+    u = params['u']
+    daytime = params['daytime']
+    interest = params['interest']
+    results = get_supply_btu(t_rate,insolence,rf,i_temp,i_humidity,a_temp,a_humidity,F,f_nv_cfm,num_towers,p_towers,wall_a,roof_a,u,daytime,interest)
+    temp = results[0]
+    return temp
 
 
 def get_total_kwh(weeks,cop,max_btu_required,day_hours):
