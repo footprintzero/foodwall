@@ -2,6 +2,8 @@ import design.model as design
 import pyppfd.solar as light
 import towers.model as tower
 import fryield.model as plants
+import hvac.model as hvac
+from utils.num_methods import newton
 
 #design
 #run the design module for default parameters and reports overall kpis
@@ -40,3 +42,13 @@ response = plants.update()
 
 #use the plant module to get x,y series to show the influence of day light integral (dli) on yield
 fryield = [plants.update({'ps_dli':x})['yield_kg_m2_yr'] for x in photons_m2_d]
+
+#hvac
+Fguess = 20000
+params = {'t_rate':0.0006,'insolence':0.25047,'rf':0.1,
+          'i_temp':300.15,'i_humidity':0.65,'a_temp':305.15,
+          'a_humidity':0.7,'f_hvac_cfm':15000,'f_nv_cfm':0,'num_towers':185,
+          'p_towers':12,'wall_a':957.6,'roof_a':504,'u':3,'daytime':True,'interest':0}
+hum = [0.75, 0.8, 0.9, 0.95]
+hmax = 1; hfull = 0.25 ; dh = 1000
+F = [newton(hvac.hvac_wrapper_humidity,h,Fguess,params,dh=dh,ymax=hmax,hfull=hfull)[0] for h in hum]
