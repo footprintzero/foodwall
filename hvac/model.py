@@ -162,8 +162,7 @@ def hvac_wrapper_temp(F,params):
     results = get_supply(f_hvac_cfm=F)
     temp = results[0]
     return temp
-
-
+  
 def duct_fans_info(f_hvac_cfm,il_fan_speed=10,il_kw=.55,shape='square',
                    building_l=150,building_w=15,systemw=1.5,systemh=2.8,
                    circulation_min=1,circ_fan_cfm=4000,circ_kw=.3,il_space=30):
@@ -188,7 +187,6 @@ def duct_fans_info(f_hvac_cfm,il_fan_speed=10,il_kw=.55,shape='square',
     num_vents=num_il_fans
     return duct_kg, circ_fan_kw, il_fan_kw, num_circ_fans,num_il_fans,num_vents
 
-
 def cap_cost(max_btu_required, cop, dessicant, duct_kg, num_circ_fans, num_il_fans,
              num_vents, steel_price, circ_fan_price, il_fan_price, vent_price,
              main_unit_price, installation_factor):
@@ -199,7 +197,6 @@ def cap_cost(max_btu_required, cop, dessicant, duct_kg, num_circ_fans, num_il_fa
     main_cost = main_unit_price*(max_btu_required/cop)*dessicant
     capital_cost = (vent_cost+il_fan_cost+circ_fan_cost+duct_cost+main_cost)*installation_factor
     return capital_cost
-
 
 def op_cost(kw_price,day_hours,refrigerant_amount,refrigerant_price,weeks_on,num_circ_fans,num_il_fans,
             circ_fans_kw,il_fans_kw,main_unit_kw):
