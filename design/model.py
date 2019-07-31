@@ -4,7 +4,7 @@ import towers.model as tower
 import fryield.model as plants
 import robot.model as rbt
 import hvac.model as hvac
-import nutrients.digester as nutrients
+import nutrients.digester as digester
 import pandas as pd
 
 cases = []
@@ -23,7 +23,12 @@ default_params = {'light':{'angle_max':90,'cloud_cover':0.25,
           'robot':{'num_towers': 183,'trays_per_tower': 4,'fruit_pl_d_day': .56},
           'conveyor':{},
           'hvac':{},
-          'nutrients':{},
+          'nutrients':{'N_recovery':0.5,'supply_N_gpd':1084,
+                       'biogas_yield_kJ_g':9.88,
+                       'AN_capacity_factor_kgpd_m3':10,
+                       'prices':{'thermal_energy_discount':0.9,
+                                 },
+                       },
           'maintenance':{},
           'config':{'period':'A'},
           'capex':{'total':750000,'structure':0,'tower':0,
@@ -76,7 +81,7 @@ def run():
     case_params['robot'] = robot_update(case_params)
     #conveyor
     case_params['hvac'] = hvac.update(case_params['hvac'])
-    case_params['nutrients'] = nutrients.update(case_params['nutrients'])
+    nutrients_update(case_params)
     #maintenance
     financials_update(case_params)
     kpi_update(case_params)
@@ -124,6 +129,13 @@ def robot_update(params):
     robot_params = rbt.update(robot_params)
     return robot_params
 
+def nutrients_update(case_params):
+    case = case_params['nutrients'].copy()
+    case['prices']['electricity_kwh'] = case_params['prices']['electricity_kwh']
+    case['supply_N_gpd'] = case_params['plants']['total_n_g_d']
+    case_params['nutrients'] = digester.update(case)
+
+
 def financials_update(params):
     global case_params
     capex = case_params['capex'].copy()
@@ -134,22 +146,24 @@ def financials_update(params):
     capex['structure'] = params['structure']['capex']['structure_USD']
     capex['tower'] = params['tower']['capex']['towers_USD']
     capex['robot'] = params['robot']['capex']['total_USD']
+    capex['nutrients'] = params['nutrients']['capex']['total_USD']
     #capex['conveyor']
     #capex['hvac']
-    #capex['nutrients']
     capex['total'] = sum([capex[x] for x in capex if not x == 'total'])
 
     #opex
     opex['tower'] = params['tower']['opex']['total']
     opex['robot'] = params['robot']['opex']['total_USD']
-    #capex['conveyor']
-    #capex['hvac']
-    #capex['nutrients']
-    #capex['maintenance']
+    opex['nutrients'] = params['nutrients']['opex']['total_USD']
+
+    #opex['conveyor']
+    #opex['hvac']
+    #opex['maintenance']
     opex['total'] = sum([opex[x] for x in opex if not x == 'total'])
 
     #revenue
     revenue['fruit'] = params['plants']['revenue']['fruit_sale_USD_yr']
+    revenue['biogas'] = params['nutrients']['revenue']['biogas']
     revenue['total'] = sum([revenue[x] for x in revenue if not x=='total'])
 
     case_params['capex'] = capex
@@ -168,6 +182,11 @@ def kpi_update(params):
 
     for pk in plant_kpis:
         kpi[pk] = params['plants'][pk]
+
+    nutrients_kpis = ['N_recovery','N_cost_USD_kg']
+
+    for pk in nutrients_kpis:
+        kpi[pk] = params['nutrients'][pk]
 
     kpi['revenue'] = params['revenue']['total']
     kpi['opex'] = params['opex']['total']

@@ -4,6 +4,7 @@ import towers.model as tower
 import fryield.model as plants
 import hvac.model as hvac
 from utils.num_methods import newton
+import nutrients.digester as digester
 
 #design
 #run the design module for default parameters and reports overall kpis
@@ -52,3 +53,25 @@ params = {'t_rate':0.0006,'insolence':0.25047,'rf':0.1,
 hum = [0.75, 0.8, 0.9, 0.95]
 hmax = 1; hfull = 0.25 ; dh = 1000
 F = [newton(hvac.hvac_wrapper_humidity,h,Fguess,params,dh=dh,ymax=hmax,hfull=hfull)[0] for h in hum]
+
+#nutrients
+N_recovery = [0.5,0.9]
+biogas_yield = [5,7,9.88] #'biogas_yield_kJ_g'
+AN_capacity_factor = [5,10,18]  #'AN_capacity_factor_kgpd_m3'
+thermal_discount = [0.9,0.75,0.5,0.25] #'thermal_eneregy_discount'
+
+yield_cases = [(x,y,z) for x in N_recovery for y in biogas_yield for z in AN_capacity_factor]
+pricing_cases = [ (x,y) for x in biogas_yield for y in thermal_discount]
+
+yield_results = [digester.update({'N_recovery':x[0],'biogas_yield_kJ_g':x[1],
+                                  'AN_capacity_factor_kgpd_m3':x[2]})
+           for x in yield_cases]
+
+pricing_results = [digester.update({'biogas_yield_kJ_g':x[0],'prices':{'thermal_energy_discount':x[1]}})
+           for x in pricing_cases]
+
+Nitrogen_cost_yield = [y['N_cost_USD_kg'] for y in yield_results]
+Nitrogen_cost_pricing = [y['N_cost_USD_kg'] for y in pricing_results]
+
+return_yield = [y['simple_return'] for y in yield_results]
+return_pricing = [y['simple_return'] for y in pricing_results]
