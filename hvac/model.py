@@ -50,10 +50,17 @@ hvac_parameters = {
                    'circ_fan_cfm': 4000,
                    'circ_kw': .3,
                    'il_space': 30,
-                   'prices': {},
-                   'energy': {},
-                   'capex': {},
-                   'opex': {}
+                   'f_hvac_cfm': 12000,
+                   'prices': {'kw_price': .18, 'c_gas_p': 8.04972, 'i_gas_p': 4.16472,
+                              'steel_price': .6, 'circ_fan_price': 125, 'il_fan_price': 150,
+                              'vent_price': 20, 'main_unit_price': .075, 'dess_factor': 23,
+                              'installation_factor': 1.25, 'ic_factor': .5},
+                   'energy': {'total_kw':0, 'circ_kw':2,'il_kw':4,'main_unit_kw':150,
+                              't_kw':23, 'u_kw':30, 'l_kw':50},
+                   'capex': {'total_usd':55000,'ducts':6000,'vents':8000,'il_fans':3000,
+                             'circ_fans':2000, 'main_unit_refr':40000,'main_unit_dess':1000000},
+                   'opex': {'total_usd':20000,'il_fans':2000,'circ_fans':1000,
+                            'main_unit_dess':20000,'main_unit_refr':1000},
                    }
 
 
@@ -66,6 +73,9 @@ def setup():
 
 
 def run():
+    w = working_params.copy()
+
+
     pass
 
 
@@ -83,6 +93,7 @@ def run_cases(cases):
 
 def update(params=None):
     setup()
+    global working_params
     if params is not None:
         for p in params:
             working_params[p] = params[p]
@@ -163,7 +174,7 @@ def hvac_wrapper_temp(F,params):
     temp = results[0]
     return temp
   
-def duct_fans_info(f_hvac_cfm,il_fan_speed=10,il_kw=.55,shape='square',
+def duct_fans_info(f_hvac_cfm,il_fan_speed=10,il_kw=.4,shape='square',
                    building_l=150,building_w=15,systemw=1.5,systemh=2.8,
                    circulation_min=1,circ_fan_cfm=4000,circ_kw=.3,il_space=30):
     flow_metric = f_hvac_cfm*.000471947
@@ -187,22 +198,61 @@ def duct_fans_info(f_hvac_cfm,il_fan_speed=10,il_kw=.55,shape='square',
     num_vents=num_il_fans
     return duct_kg, circ_fan_kw, il_fan_kw, num_circ_fans,num_il_fans,num_vents
 
-def cap_cost(max_btu_required, cop, dessicant, duct_kg, num_circ_fans, num_il_fans,
-             num_vents, steel_price, circ_fan_price, il_fan_price, vent_price,
-             main_unit_price, installation_factor):
+def cap_cost(max_btu_required=396711.65, dess_factor=23, duct_kg=13876.84, num_circ_fans=13, num_il_fans=24,
+             num_vents=24, steel_price=.6, circ_fan_price=125, il_fan_price=150, vent_price=20,
+             main_unit_price=.075, installation_factor=1.25):
     vent_cost = vent_price*num_vents
     il_fan_cost = il_fan_price*num_il_fans
     circ_fan_cost = circ_fan_price*num_circ_fans
     duct_cost = duct_kg*steel_price
-    main_cost = main_unit_price*(max_btu_required/cop)*dessicant
+    main_cost = main_unit_price*max_btu_required*dess_factor
     capital_cost = (vent_cost+il_fan_cost+circ_fan_cost+duct_cost+main_cost)*installation_factor
-    return capital_cost
+    return capital_cost,vent_cost,il_fan_cost,circ_fan_cost,duct_cost,main_cost
 
-def op_cost(kw_price,day_hours,refrigerant_amount,refrigerant_price,weeks_on,num_circ_fans,num_il_fans,
-            circ_fans_kw,il_fans_kw,main_unit_kw):
-    refrigerant_cost = refrigerant_price*refrigerant_amount
-    circ_fans_total = num_circ_fans*circ_fans_kw*24*7*weeks_on*kw_price
-    il_fans_total = num_il_fans*il_fans_kw*day_hours*7*weeks_on*kw_price
-    main_unit_total = main_unit_kw*day_hours*7*weeks_on*kw_price
-    operational_cost = refrigerant_cost+circ_fans_total+il_fans_total+main_unit_total
-    return operational_cost
+
+def refr_op_cost(kw_price=.18,day_hours=12,weeks_on=40,day_btu=396711.65,
+                 night_btu=100603.59,cop=3.5,**kwargs):
+    main_unit_day = (day_btu/cop)*.000293*day_hours*7*weeks_on*kw_price
+    main_unit_night = (night_btu/cop)*.000293*(24-day_hours)*7*weeks_on*kw_price
+    main_unit_total = main_unit_day+main_unit_night
+    main_unit_energy = 5
+    return main_unit_total,main_unit_energy
+
+
+def dess_op_cost(c_gas_p=8.04972,i_gas_p=4.16472,ic_factor=.5,day_hours=12,kw_price=.18,
+                 weeks_on=40,day_btu=396711.65,night_btu=100603.59,bio_btu=226000,cop=1,**kwargs):
+    real_bio_btu=cop*bio_btu
+    gas_price = (((c_gas_p-i_gas_p)*ic_factor)+i_gas_p)/1000000
+    if bio_btu > night_btu:
+        excess_btu = ((real_bio_btu-night_btu)*(24-day_hours))/day_hours
+        final_btu = day_btu-bio_btu-excess_btu
+        main_unit_day = (final_btu / cop) * day_hours * 7 * weeks_on * gas_price
+        main_unit_total = main_unit_day
+    else:
+        main_unit_day = ((day_btu-bio_btu)/cop)*day_hours*7*weeks_on*gas_price
+        main_unit_night = ((night_btu-bio_btu)/cop)*(24-day_hours)*7*weeks_on*gas_price
+        main_unit_total = main_unit_day+main_unit_night
+    main_unit_kw = main_unit_total/kw_price
+    return main_unit_total,main_unit_kw
+
+
+def fans_op_cost(day_btu=396711.65,night_btu=100603.59,circ_fan_kw=4,il_fan_kw=5,weeks_on=40,
+                 day_hours=12,kw_price=.18,**kwargs):
+    circ_fans_total = circ_fan_kw*24*7*weeks_on*kw_price
+    il_fans_day = il_fan_kw * day_hours * 7 * weeks_on * kw_price
+    il_fans_night = il_fan_kw * (night_btu/day_btu) * (24 - day_hours) * 7 * weeks_on * kw_price
+    il_fans_total = il_fans_day+il_fans_night
+    fans_total = il_fans_total + circ_fans_total
+    return fans_total,il_fans_total,circ_fans_total
+
+
+def op_cost(type='dess', **kwargs):
+    foc = fans_op_cost(**kwargs)
+    if type == 'dess':
+        doc = dess_op_cost(**kwargs)
+        oc = doc+foc
+    elif type == 'refr':
+        roc = refr_op_cost(**kwargs)
+        oc = roc[0]+foc
+    return oc
+
