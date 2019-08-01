@@ -5,6 +5,7 @@ import fryield.model as plants
 import hvac.model as hvac
 from utils.num_methods import newton
 import nutrients.digester as digester
+from fryield import fvcb
 
 #design
 #run the design module for default parameters and reports overall kpis
@@ -75,3 +76,17 @@ Nitrogen_cost_pricing = [y['N_cost_USD_kg'] for y in pricing_results]
 
 return_yield = [y['simple_return'] for y in yield_results]
 return_pricing = [y['simple_return'] for y in pricing_results]
+
+#fvcb
+#show the dependency of electron transport of temperature and irradiance
+tmin = 0 ; tmax = 45 ; npts = 50
+T_C = [tmin+x/(npts-1)*(tmax-tmin) for x in range(npts)]
+
+I = [0,100,250,500,1000]
+j = [[fvcb.electron_transport(j,t) for t in T_C] for j in I]
+
+
+#show the dependency of net assimilation on CO2 partial pressure at 700 umol_m2_s (Figure 8 FvCB 1980)
+pCO2 = [55,110,165,230,330]
+A = [[fvcb.net_assimilation_rate(t,700,c) for t in T_C] for c in pCO2]
+

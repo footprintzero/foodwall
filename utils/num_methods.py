@@ -52,3 +52,15 @@ fun :
 def rk45_integrate1D(dydt,tmin,tmax,y0):
     result = solve_ivp(dydt,[tmin,tmax],[y0])
     return result.y[0][-1]
+
+def quadratic_roots(a,b,c):
+    x_m = math.nan ; x_p = math.nan
+    if ((b==0) and (c/a<0)):
+        x_m = math.sqrt(-1*c/a)
+        x_p = x_m
+    else:
+        radical = b**2-4*a*c
+        if radical >=0:
+            x_m = 0.5*1/a *( -b - math.sqrt(radical))
+            x_p = 0.5*1/a *( -b + math.sqrt(radical))
+    return (x_m,x_p)

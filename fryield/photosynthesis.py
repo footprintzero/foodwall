@@ -21,6 +21,7 @@ default_params = {'ps_max_molCO2_m2_d':0.17,
 
 case_params = {}
 
+
 def update_params(params=None):
     global case_params
     if len(case_params)==0:
