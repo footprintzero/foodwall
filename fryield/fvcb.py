@@ -1,5 +1,6 @@
 import math
 from utils.num_methods import quadratic_roots
+import utils.chemistry as chem
 
 CONSTANTS = {'R_ig_J_K_mol':8.3145,
             }
@@ -24,7 +25,7 @@ default_params = {'leaf_energy_loss':0.23,
                   'm_PGA_red_max_umol_gChol_s': 436,
                   'chloroplast_density_g_m2': 0.45,
                   'carbox_ox_sel_c': -9.2, # Nicotiana tabacum Walker 2013 value -9.2
-                  'carbox_ox_sel_dHa_J_mol': -36000, # adjusted -- Nicotiana tabacum Walker 2013 34,200 Jmol-1
+                  'carbox_ox_sel_dHa_J_mol': -36500, # adjusted -- Nicotiana tabacum Walker 2013 34,200 Jmol-1
                   'carbox_c': 17.5, #Nicotiana tabacum Walker 2013
                   'carbox_dHa_J_mol': 28200, # adjusted -- Nicotiana tabacum Walker 2013 37,600 Jmol-1
                   'ox_c': 15.3, #Nicotiana tabacum Walker 2013
@@ -33,9 +34,11 @@ default_params = {'leaf_energy_loss':0.23,
                   'kc_k25C_s': 2.5, #FvCB 1980
                   'hyperbolic_shape_factor': 20, #FvCB 1980
                   'j_max_j0_uEq_gChl_s': 1.466*10**9, # adjusted to match 467 umol_m2_s @ 25C FvCB 1980
-                  'j_max_E_J_mol': 37000, #FvCB 1980
+                  'j_max_E_J_mol': 38000, #FvCB 1980 37000
                   'j_max_H_J_mol': 220000, #FvCB 1980
                   'j_max_S_J_mol_K': 710, #FvCB 1980
+                  'rup2_blend':0.5,
+                  'A_min_umol_m2_s': -10,
                   }
 
 case_params = {}
@@ -43,11 +46,10 @@ case_params = {}
 
 def update_params(params=None):
     global case_params
-    if len(case_params)==0:
-        case_params = default_params.copy()
-        if not params is None:
-            for p in params:
-                case_params[p] = params[p]
+    case_params = default_params.copy()
+    if not params is None:
+        for p in params:
+            case_params[p] = params[p]
 
 
 def leaf_photosynthesis_efficiency(T_C,I,pCO2_ubar,**kwargs):
@@ -65,22 +67,55 @@ def leaf_photosynthesis_efficiency(T_C,I,pCO2_ubar,**kwargs):
 
 def net_assimilation_rate(T_C,I,pCO2_ubar,**kwargs):
     #umol_m2_s
+    update_params()
+    global case_params
+    model_args = ['A_min_umol_m2_s']
+    for arg in model_args:
+        if not arg in kwargs:
+            kwargs[arg] = case_params[arg]
+    A_min = kwargs['A_min_umol_m2_s']
     vc = carboxylation_rate(T_C,I,pCO2_ubar,**kwargs)
     R = dark_resp(T_C,**kwargs)
     phi = phi_carbox_oxy(T_C,pCO2_ubar,**kwargs)
     A = (1-0.5*phi)*vc-R
+    if A<A_min:
+        A = A_min
     return A
 
 def carboxylation_rate(T_C,I,pCO2_ubar,**kwargs):
     #umol_m2_s
-    j = electron_transport(T_C,I,**kwargs)
+    update_params()
+    global case_params
+    model_args = ['rup2_blend']
+    for arg in model_args:
+        if not arg in kwargs:
+            kwargs[arg] = case_params[arg]
+    blend = kwargs['rup2_blend']
+    Aj = light_limited_carboxylation_egea_eqn_2(T_C,I,pCO2_ubar,**kwargs)
     rup2_e13 = rup2_sat_rate_eqn_13(T_C,pCO2_ubar,**kwargs)
-    rup2_e40 = rup2_sat_rate_eqn_40(T_C,pCO2_ubar,**kwargs)
-    vc = min([j,rup2_e13,rup2_e40])
+    #rup2_e40 = rup2_sat_rate_eqn_40(T_C,pCO2_ubar,**kwargs)
+    #rup2 = rup2_e13*(1-blend)+rup2_e40*blend
+    vc = min([Aj,rup2_e13])
     return vc
 
+def light_limited_carboxylation_egea_eqn_2(T_C,I,pCO2_ubar,**kwargs):
+    #source [2] Egea 2011
+    #umolCO2_m2_s
+    J = electron_transport(T_C,I,**kwargs) #umol_e
+    gamma = CO2_compensation_no_dark(T_C,**kwargs)
+    denom = (pCO2_ubar+2*gamma)
+    Aj = 0.25*J*(pCO2_ubar-gamma)/denom
+    return Aj
+
+def light_limited_carboxylation_eqn_10(T_C,I,pCO2_ubar,**kwargs):
+    #umolCO2_m2_s
+    J = electron_transport(T_C,I,**kwargs) #umol_e
+    phi = phi_carbox_oxy(T_C,pCO2_ubar,**kwargs)
+    Jprime = J/(4+4*phi)
+    return Jprime
+
 def electron_transport(T_C,I,**kwargs):
-    #umol_m2_s
+    #umole_m2_s
     update_params()
     global case_params
     model_args = ['leaf_energy_loss','hyperbolic_shape_factor',
@@ -112,8 +147,8 @@ def e_transport_max(T_C,**kwargs):
     H = kwargs['j_max_H_J_mol']
     S = kwargs['j_max_S_J_mol_K']
     R = CONSTANTS['R_ig_J_K_mol']
-    invRT = 1/(R*T_K(T_C))
-    denom = 1+math.exp(invRT*(S*T_K(T_C)-H))
+    invRT = 1/(R*chem.T_K(T_C))
+    denom = 1+math.exp(invRT*(S*chem.T_K(T_C)-H))
     jmax = j0*math.exp(-E*invRT)/denom
     return jmax
 
@@ -253,9 +288,6 @@ def k_carbox(T_C,**kwargs):
     k_s = arrhenius(T_C,k25C,dHa)
     return k_s
 
-def T_K(T_C):
-    return T_C+273.15
-
 def phi_carbox_oxy(T_C,pCO2_ubar,**kwargs):
     update_params()
     global case_params
@@ -271,7 +303,7 @@ def phi_carbox_oxy(T_C,pCO2_ubar,**kwargs):
 
 def arrhenius(T_C,k_ref,dHa,T_ref_C=25):
     HR_K = dHa/CONSTANTS['R_ig_J_K_mol']
-    exp_term = HR_K*(1/T_K(T_ref_C)-1/T_K(T_C))
+    exp_term = HR_K*(1/chem.T_K(T_ref_C)-1/chem.T_K(T_C))
     k = k_ref*math.exp(exp_term)
     return k
 
@@ -279,4 +311,6 @@ def arrhenius(T_C,k_ref,dHa,T_ref_C=25):
 [1] Galmes, 2016 - A compendium of temperature responses of Rubisco kinetic traits: 
     variability among and within photosynthetic groups and impacts on photosynthesis modeling
 
+[2] Egea, 2011 - towards an improved and more flexible representation of water stress
+    in coupled photosynthesis-stomatal conductance models
 """

@@ -2,11 +2,21 @@ import numpy as np
 import math
 from utils.num_methods import rk45_integrate1D
 from utils.num_methods import newton
+from utils import chemistry as chem
+import psypy.psySI as si
+from fryield import fvcb as fvcb
 
 CONSTANTS = {'water_g_cm3':1,
+             'MW_H2O':18.02,
+             'enth_vap_kJ_kg':2260,
             }
 
+STAT_GROUPS = ['24hr_avg','24hr_max','day_avg','night_avg']
+STAT_FIELDS = ['T_C','RH','irradiance_W_m2','ppfd_umol_m2_s']
+
 default_params = {'ps_max_molCO2_m2_d':0.17,
+                  'mature_wks':8,
+                  'wall_transmissivity':0.8,
                   'biomass_g_molCO2':120,
                   'canopy_decay':0.75,
                   'dm0_g': 2.5,
@@ -17,10 +27,27 @@ default_params = {'ps_max_molCO2_m2_d':0.17,
                   'leaf_allocation': 0.35,
                   'leaf_th_nm':110,
                   'leaf_SG':0.6,
-                  }
+                  'leaf_light_capture':0.37,
+                  'tsp_pct_leaf_energy':0.6,
+                  'water_stress':0,
+                  'p_abs_kPa':101.325,
+                  'gs_min_mol_m2_s':0.015,
+                  'gs_max_mol_m2_s':0.3,
+                  'Ci_ubar':230,
+                  'Ci_min':30,
+                  'Ca_ubar':370,
+                  'gb_mol_m2_s':3,
+                  'gb_rel':1.37,
+                  'gs_rel':1.6,
+                  'photon_energy_umol_J':2.1,
+                  'conductance_tuning':1,
+                  '24hr_avg': {},
+                  '24hr_max': {},
+                  'day_avg': {},
+                  'night_avg': {},
+                 }
 
 case_params = {}
-
 
 def update_params(params=None):
     global case_params
@@ -49,7 +76,7 @@ def mature_growth(**kwargs):
         if not arg in kwargs:
             kwargs[arg] = case_params[arg]
     LAI_pct = kwargs['LAI_pct']
-    dm,days_maturity = growth_at_LAI_pct(**kwargs)
+    dm,days_maturity = dm_at_LAI_pct(**kwargs)
     return (dm,days_maturity)
 
 def dm_at_t(tf,**kwargs):
@@ -69,10 +96,17 @@ def dm_at_t(tf,**kwargs):
     return dm
 
 
-def growth_at_LAI_pct(LAI_pct,t_guess=80,hfull=0.25,**kwargs):
+def dm_at_LAI_pct(LAI_pct,hfull=0.25,**kwargs):
     def LAI_wrapper(tf,kwargs):
         LAI_p = LAI_pct_max(tf,**kwargs)
         return LAI_p
+    update_params()
+    global case_params
+    model_args = ['mature_wks']
+    for arg in model_args:
+        if not arg in kwargs:
+            kwargs[arg] = case_params[arg]
+    t_guess = kwargs['mature_wks']*7
     result = newton(LAI_wrapper,LAI_pct,t_guess,kwargs,hfull=hfull)
     tf = result[0]
     dm = dm_at_t(tf,**kwargs)
@@ -170,6 +204,90 @@ def LAI_growth_rate_d(LAI,**kwargs):
     growth_rate = pl*s*c*f
     return growth_rate
 
+def plant_assimilation_rate(T_C,RH,I,ppfd,**kwargs):
+    pass
+
+
+def plant_transpiration_rate(T_C,RH,I,ppfd,**kwargs):
+    pass
+
+def net_assimilation_rate(T_C,RH,I,ppfd,**kwargs):
+    #umol_m2_s
+    def assim_wrapper(A,kwargs):
+        Ci_min = kwargs['Ci_min']
+        Ca = kwargs['Ca_ubar'] ; gb = kwargs['gb_mol_m2_s']
+        gb_rel = kwargs['gb_rel'] ; gs_rel = kwargs['gs_rel']
+        vpd_kPa = vapor_pressure_deficit(T_C,RH)
+        tsp = leaf_transpiration_rate_mmol_m2_s(I,**kwargs)
+        gs = stomata_conductance_from_tsp(tsp,vpd_kPa,**kwargs)
+        grad = A*(gb_rel/gb+gs_rel/gs)
+        if grad>=Ca:
+            Ci = Ci_min
+            Ag = (Ca-Ci)*1/(gb_rel/gb+gs_rel/gs)
+        else:
+            Ci = Ca-grad
+            Ag = fvcb.net_assimilation_rate(T_C,ppfd,Ci,**kwargs)
+        residual = Ag-A
+        return residual
+    tol = 0.05 ; hfull=0.25
+    update_params()
+    global case_params
+    model_args = ['Ci_ubar','Ci_min','Ca_ubar','gb_rel',
+                  'gs_rel','gb_mol_m2_s']
+    for arg in model_args:
+        if not arg in kwargs:
+            kwargs[arg] = case_params[arg]
+    Ci0 = kwargs['Ci_ubar']
+    A0 = fvcb.net_assimilation_rate(T_C,ppfd,Ci0,**kwargs)
+    A_umol_m2_s = newton(assim_wrapper,0,A0,kwargs,hfull=hfull,tolerance=tol)[0]
+    return A_umol_m2_s
+
+def stomata_conductance_from_tsp(tsp_mmol_m2_s,vpd_kPa,**kwargs):
+    #mol_m2_s
+    update_params()
+    global case_params
+    model_args = ['gs_min_mol_m2_s','gs_max_mol_m2_s',
+        'p_abs_kPa','conductance_tuning']
+    for arg in model_args:
+        if not arg in kwargs:
+            kwargs[arg] = case_params[arg]
+    gs_range = [kwargs['gs_min_mol_m2_s'],kwargs['gs_max_mol_m2_s']]
+    f = kwargs['conductance_tuning']
+    P_kPa = kwargs['p_abs_kPa']
+    gs_mol_m2_s = f*tsp_mmol_m2_s*P_kPa/vpd_kPa*1/1000
+    if gs_mol_m2_s<gs_range[0]:
+        gs_mol_m2_s=gs_range[0]
+    elif gs_mol_m2_s>gs_range[1]:
+        gs_mol_m2_s=gs_range[1]
+    return gs_mol_m2_s
+
+def leaf_transpiration_rate_mmol_m2_s(I,**kwargs):
+    update_params()
+    global case_params
+    model_args = ['tsp_pct_leaf_energy',
+                  'leaf_light_capture',
+                  'wall_transmissivity','water_stress']
+    for arg in model_args:
+        if not arg in kwargs:
+            kwargs[arg] = case_params[arg]
+    tx_wall = kwargs['wall_transmissivity']
+    lcr = kwargs['tsp_pct_leaf_energy']
+    tsp_pct = kwargs['tsp_pct_leaf_energy']
+    theta = kwargs['water_stress']
+    enth_vap = CONSTANTS['enth_vap_kJ_kg']
+    MW = CONSTANTS['MW_H2O']
+    tsp_W_m2 = I*tx_wall*lcr*tsp_pct*(1-theta)
+    tsp_mmol_m2_s = tsp_W_m2*1/enth_vap*1000/MW
+    return tsp_mmol_m2_s
+
+def vapor_pressure_deficit(T_C,RH):
+    #kPa
+    update_params()
+    global case_params
+    P = case_params['p_abs_kPa']
+    psat = chem.antoine_psat(T_C)*P
+    vpd_kPa = psat*(1-RH)
+    return vpd_kPa
 
 def leaf_density(th_um=None,sg=None):
     #g/m2
