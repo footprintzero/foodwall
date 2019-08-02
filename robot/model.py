@@ -13,7 +13,7 @@ robot_parameters = {'num_towers': 183,
                     'prices':{'electricity_kwh':0.18},
                     }
 
-working_params = {}
+working_parameters = {}
 
 
 def update(params=None):
@@ -23,10 +23,10 @@ def update(params=None):
         for p in params:
             if p in SUBGROUPS:
                 for s in params[p]:
-                    working_params[p][s] = params[p][s]
-            working_params[p] = params[p]
+                    wp[p][s] = params[p][s]
+            working_parameters[p] = params[p]
     run()
-    response = working_params.copy()
+    response = working_parameters.copy()
     response.update(result)
     return response
 

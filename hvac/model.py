@@ -169,19 +169,15 @@ def run():
     opex['total_usd_refr']=refro+tfo
 
 
-
-
 def run_cases(cases):
     global report
     for c in cases:
-        for x in c:
-            if not c[x] == {}:
-                for k in c[x]:
-                    working_params[x][k] = c[x][k]
+        for k in c:
+            working_params[k] = c[k]
         update()
         c.update(working_params)
     report = pd.DataFrame.from_records(cases)
-
+    return report
 
 def update(params=None):
     setup()
@@ -200,10 +196,10 @@ def get_supply(f_hvac_cfm=12000,t_rate=.0006, insolence=.25047, rf=.1, i_temp=30
     f_nv = f_nv_cfm*(1/60)*.0283168*air_density
     if 'supply_humidity' in kwargs:
         supply_humidity = kwargs['supply_humidity']
-        f_hvac_cfm = newton(hvac_wrapper_humidity,supply_humidity,15000,hfull=1,dh=500,ymax=None)[0]
+        f_hvac_cfm = newton(hvac_wrapper_humidity,supply_humidity,20000,hfull=1,dh=500,ymax=None)[0]
     if 'supply_temperature' in kwargs:
         supply_temperature = kwargs['supply_temperature']
-        f_hvac_cfm = newton(hvac_wrapper_temp,supply_temperature,15000,hfull=.25,dh=500,ymax=None)[0]
+        f_hvac_cfm = newton(hvac_wrapper_temp,supply_temperature,20000,hfull=.25,dh=500,ymax=None)[0]
     if 'supply_humidity' in kwargs and 'supply_temperature' in kwargs:
         supply_temperature = kwargs['supply_temperature']
         supply_humidity = kwargs['supply_humidity']
@@ -253,13 +249,13 @@ def get_supply(f_hvac_cfm=12000,t_rate=.0006, insolence=.25047, rf=.1, i_temp=30
     return [supply_temp, supply_humidity, f_hvac_cfm,f_nv_cfm, max_btu_required,t_kw,l_kw,u_kw]
 
 
-def hvac_wrapper_humidity(F,params):
+def hvac_wrapper_humidity(F):
     results = get_supply(f_hvac_cfm=F)
     humidity = results[1]
     return humidity
 
 
-def hvac_wrapper_temp(F,params):
+def hvac_wrapper_temp(F):
     results = get_supply(f_hvac_cfm=F)
     temp = results[0]
     return temp
@@ -327,7 +323,9 @@ def dess_op_cost(c_gas_p=8.04972,i_gas_p=4.16472,ic_factor=.5,day_hours=12,
 
 
 def fans_op_cost(circ_fan_kw=4,il_fan_kw=5,weeks_on=40,day_hours=12,
-                 kw_price=.18,day_btu=396711.65,night_btu=40241.44):
+                 kw_price=.18,day_btu=396711.65,night_btu=40241.44,**kwargs):
+    day_btu = get_supply(all(kwargs))[4]
+    night_btu = get_supply(all(kwargs))[4]
     circ_fans_total = circ_fan_kw*24*7*weeks_on*kw_price
     il_fans_day = il_fan_kw * day_hours * 7 * weeks_on * kw_price
     il_fans_night = il_fan_kw * (night_btu/day_btu) * (24 - day_hours) * 7 * weeks_on * kw_price
@@ -337,13 +335,13 @@ def fans_op_cost(circ_fan_kw=4,il_fan_kw=5,weeks_on=40,day_hours=12,
 
 
 def op_cost(type='dess', **kwargs):
-    foc = fans_op_cost(**kwargs)
+    foc = fans_op_cost(**kwargs)[0]
     if type == 'dess':
         doc = dess_op_cost(**kwargs)
-        oc = doc[0]+foc[0]
+        oc = doc+foc
     elif type == 'refr':
         roc = refr_op_cost(**kwargs)
-        oc = roc[0]+foc[0]
+        oc = roc+foc
     else:
         return 'error! type must be dess or refr'
     return oc
