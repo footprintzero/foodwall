@@ -20,7 +20,7 @@ SUBGROUPS = ['prices','energy','capex','opex']
 
 default_params = {'height_m': 2.8,
                   'width_m':1.5,
-                  'facade_L':330,
+                  'facade_L':336,
                   'dia_cm': 21,
                   'plant_hw': 1,
                   'top_clearance_cm': 30,
