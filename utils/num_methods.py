@@ -1,7 +1,7 @@
 import math
 from scipy.integrate import solve_ivp
 
-def newton(fun_handle,y,x0,params={},hfull=1,dh=0.001,tolerance=0.001,maxiter=100,ymax=None):
+def newton(fun_handle,y,x0,params={},hfull=1,dh=0.001,tolerance=0.001,maxiter=100,ymax=None,xrange=None):
     def y_at_x(x,dh):
         ym = fun_handle(x - 0.5 * dh, params)
         yp = fun_handle(x + 0.5 * dh, params)
