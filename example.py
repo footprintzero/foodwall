@@ -6,6 +6,8 @@ import hvac.model as hvac
 from utils.num_methods import newton
 import nutrients.digester as digester
 from fryield import fvcb
+from fryield import photosynthesis as ps
+import pandas as pd
 
 #design
 #run the design module for default parameters and reports overall kpis
@@ -78,15 +80,45 @@ return_yield = [y['simple_return'] for y in yield_results]
 return_pricing = [y['simple_return'] for y in pricing_results]
 
 #fvcb
-#show the dependency of electron transport of temperature and irradiance
-tmin = 0 ; tmax = 45 ; npts = 50
+#show the dependency of electron transport limited assimulation on temperature and irradiance
+tmin = 0 ; tmax = 50 ; npts = 50
 T_C = [tmin+x/(npts-1)*(tmax-tmin) for x in range(npts)]
 
 I = [0,100,250,500,1000]
-j = [[fvcb.electron_transport(j,t) for t in T_C] for j in I]
+Jprime = [[fvcb.light_limited_carboxylation_rate(t,i,230) for t in T_C] for i in I]
 
 
 #show the dependency of net assimilation on CO2 partial pressure at 700 umol_m2_s (Figure 8 FvCB 1980)
 pCO2 = [55,110,165,230,330]
 A = [[fvcb.net_assimilation_rate(t,700,c) for t in T_C] for c in pCO2]
+
+#show the dependency of net assimilation on photon flux umol_m2_s at 230 ubar CO2 (Figure 9 FvCB 1980)
+A = [[fvcb.net_assimilation_rate(t,i,230) for t in T_C] for i in I]
+
+
+#photosynthesis
+
+#get net assimilation in umol/m2/s as a function of temperature, humidity, and solar irradiance
+energy_photon = 2.1 #umol/J
+RH = [0.5,0.65,0.75,0.9]
+
+cases = [(t,rh,i) for t in T_C for rh in RH for i in I]
+A = [ps.net_assimilation(x[0],x[1],x[2],x[2]*energy_photon) for x in cases]
+df = pd.DataFrame({'T_C':[x[0]for x in cases],'RH':[x[1]for x in cases],'irradiance':[x[2]for x in cases],'A':A})
+
+#evaluate results as pivot table for irradiance = 1000 W/m2
+pvt = pd.pivot_table(df[df.irradiance==1000],values='A',index='T_C',columns='RH',aggfunc='mean')
+
+
+#get plant size and # of days to maturity as a % of LAI max - an indicator of maturity
+A = [5,8,10,15,20,22]
+day_factor = 0.25 ; LAI_pct = 0.7 ; dm0_g = 2.5 ; mature_wks = 6
+A_daily = [a*day_factor*3600*24*10**-6 for a in A] #'ps_max_molCO2_m2_d'
+A_m2 = [0.4,0.5,0.7,1,1.5] #A_m2
+cases = [(r,a) for r in A_daily for a in A_m2]
+results = [ps.mature_growth(LAI_pct=LAI_pct,dm0_g=dm0_g,mature_wks=mature_wks,
+                            ps_max_molCO2_m2_d=x[0],
+                            A_m2=x[1]) for x in cases]
+size = [x[0] for x in results]
+days = [x[1] for x in results]
 

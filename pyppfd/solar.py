@@ -88,6 +88,42 @@ def insolence_daily(daylight_hpd=12,angle_max=90,cloud_cover=0.25,doy=90,resolut
     insolence = global_rad*daylight_hpd/24
     return insolence
 
+
+def photon_flux_by_hour(hour_of_day,daylight_hpd=12,angle_max=90,cloud_cover=0.25,doy=90):
+    #umol/m2/s
+    global SOLAR_CONSTANT, photons
+    load()
+    nm = CONSTANTS['PPFD_nm']
+    angle = solar_angle_rad(hour_of_day,daylight_hpd,angle_max)
+    ext = extraterrestrial(angle,doy)
+    diff_r = diffuse_ratio(atm_transmission(cloud_cover))
+    par_diff = par_csdiffuse(diff_r, angle*0.5/180*math.pi)
+    diff_r = diff_r - par_diff
+    global_rad = (1-diff_r)*ext
+    photon_energy = spectrum_photon_energy('direct and circumsolar',nm)
+    dli = global_rad*photon_energy
+    return dli
+
+
+def irradiation_by_hour(hour_of_day,daylight_hpd=12,angle_max=90,cloud_cover=0.25,doy=90):
+    #W/m2
+    global SOLAR_CONSTANT, photons
+    load()
+    angle = solar_angle_rad(hour_of_day,daylight_hpd,angle_max)
+    ext = extraterrestrial(angle,doy)
+    diff_r = diffuse_ratio(atm_transmission(cloud_cover))
+    global_rad = (1-diff_r)*ext
+    irradiation = global_rad
+    return irradiation
+
+
+def solar_angle_rad(hour_of_day,daylight_hpd=12,angle_max=90):
+    intensity = 1 - math.fabs(2*(hour_of_day-12)/daylight_hpd)
+    if intensity<0:
+        intensity = 0
+    angle = angle_max/90*0.5*math.pi*intensity
+    return angle
+
 def spectrum_photon_energy(rad_measure='global',nm=None):
     load()
     watts = spd[rad_measure].sum()
@@ -97,22 +133,6 @@ def spectrum_photon_energy(rad_measure='global',nm=None):
         pfd = photons.loc[nm[0]:nm[1]][rad_measure].sum()*10**6
     ratio = pfd/watts
     return ratio
-
-#def insolance_daily(rad_measure='global',doy=0,nm=None,units='pfd',resolution=100):
-#    global SOLAR_CONSTANT, photons, spd
-#    load()
-#    angles = [math.pi*x/resolution for x in range(resolution+1)]
-#    ext = np.mean([extraterrestrial(a,doy) for a in angles])
-#    if units=='pfd':
-#        data = photons*10**6
-#    elif units=='Watts':
-#        data = spd
-#    if nm is None:
-#        rad = data[rad_measure].sum()
-#    else:
-#        rad = data.loc[nm[0]:nm[1]][rad_measure].sum()
-#    dailyavg = ext*rad/SOLAR_CONSTANT
-#    return dailyavg
 
 
 def spectral_flux(nm,nm_1,spf,spf_1):
