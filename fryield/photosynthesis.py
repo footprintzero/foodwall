@@ -79,6 +79,7 @@ def mature_growth(**kwargs):
     dm,days_maturity = dm_at_LAI_pct(**kwargs)
     return (dm,days_maturity)
 
+
 def dm_at_t(tf,**kwargs):
     update_params()
     global case_params

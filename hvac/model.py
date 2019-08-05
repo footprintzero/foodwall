@@ -7,14 +7,13 @@ SUBGROUPS = ['prices','energy','capex','opex']
 
 # hello world
 hvac_parameters = {
-                   'bio_btu':226000,
+                   'bio_kw':66.218,
                    'num_vents': 24,
                    'num_circ_fans': 13,
                    'num_il_fans': 24,
                    'cop_refr': 3.5,
                    'cop_dess': 1,
-                   'kwh_per_day': 1200,
-                   't_rate': .0006,  # transpiration rate in L/min/plant
+                   't_rate': .006,  # transpiration rate in L/min/plant
                    'insolence': .25047,  # light in kw/m2
                    'rf': .1,  # reflection factor constant
                    'u': 3,  # heat transfer constant for pmma
@@ -45,13 +44,14 @@ hvac_parameters = {
                    'circ_fan_cfm': 4000,
                    'circ_kw': .3,
                    'il_space': 30,
-                   'f_hvac_cfm': 12000,
+                   'f_hvac_cfm': 40000,
                    'f_nv_cfm':0,
                    'supply_temperature':0,
                    'supply_humidity':0,
                    'day_btu':396711.65,
                    'night_btu':40241.44,
-
+                   'floors':1,
+                   'true_for_dess':True,
                    'prices': {'kw_price': .18, 'c_gas_p': 8.04972, 'i_gas_p': 4.16472,
                               'steel_price': .6, 'circ_fan_price': 125, 'il_fan_price': 150,
                               'vent_price': 20, 'main_unit_price': .075, 'dess_factor': 20,
@@ -141,7 +141,7 @@ def run():
                                      working_params['num_il_fans'],working_params['num_vents'],
                                      prices['steel_price'],prices['circ_fan_price'],
                                      prices['il_fan_price'],prices['vent_price'],prices['main_unit_price'],
-                                     prices['installation_factor'])
+                                     prices['installation_factor'],working_params['floors'])
     capex['total_usd_dess']=cc
     capex['vents']=vc
     capex['il_fans']=ifc
@@ -152,19 +152,19 @@ def run():
     capex['main_unit_refr']=(mc/v)
     capex['total_usd_refr']= prices['installation_factor']*((mc/v)+dc+cfc+ifc+vc)
     [tfo,cfo,ifo]=fans_op_cost(ck,ik,working_params['weeks_on'],working_params['day_hours'],
-                               prices['kw_price'],mb,mbn)
-    opex['circ_fans']=cfo
-    opex['il_fans']=ifo
+                               prices['kw_price'],mb,mbn,working_params['floors'])
+    opex['circ_fans']=ifo
+    opex['il_fans']=cfo
     desso = dess_op_cost(prices['c_gas_p'],prices['i_gas_p'],prices['ic_factor'],
                          working_params['day_hours'],working_params['weeks_on'],
-                         working_params['bio_btu'],working_params['cop_dess'],mb,mbn)
+                         working_params['bio_kw'],working_params['cop_dess'],mb,mbn,working_params['floors'])
 
     if desso<0:
         desso=0
     opex['main_unit_dess'] = desso
     opex['total_usd_dess']=desso+tfo
     refro = refr_op_cost(prices['kw_price'],working_params['day_hours'],working_params['weeks_on'],
-                         working_params['cop_refr'],mb,mbn)
+                         working_params['cop_refr'],mb,mbn,working_params['floors'])
     opex['main_unit_refr']=refro
     opex['total_usd_refr']=refro+tfo
 
@@ -179,17 +179,22 @@ def run_cases(cases):
     report = pd.DataFrame.from_records(cases)
     return report
 
+
 def update(params=None):
+    global SUBGROUPS
     setup()
-    global working_params
     if params is not None:
         for p in params:
-            working_params[p] = params[p]
+            if p in SUBGROUPS:
+                for s in params[p]:
+                    working_params[p][s] = params[p][s]
+            else:
+                working_params[p] = params[p]
     run()
     return working_params.copy()
 
 
-def get_supply(f_hvac_cfm=12000,t_rate=.0006, insolence=.25047, rf=.1, i_temp=300.15, i_humidity=.65,
+def get_supply(f_hvac_cfm=40000,t_rate=.006, insolence=.25047, rf=.1, i_temp=300.15, i_humidity=.65,
                a_temp=305.15, a_humidity=.7,f_nv_cfm=0, num_towers=185,
                p_tower=12, wall_a=957.6, roof_a=504, u=3, daytime=True, **kwargs):
     air_density = 1.2   # kg/m3
@@ -276,7 +281,8 @@ def duct_fans_info(f_hvac_cfm=12000,il_fan_speed=10,il_kw=.2,shape='square',
         c_ducts = 4*r
         duct_m2 = c_ducts*2*(building_l + building_w+(2*systemw))
     num_il_fans = 2*m.ceil((2*(building_l + building_w+(2*systemw)))/il_space)
-    il_fan_kw = num_il_fans*il_kw
+    ikw=il_kw*(f_hvac_cfm/12000)
+    il_fan_kw = num_il_fans*ikw
     duct_kg = duct_m2*6.86*2  # 6.86kg/m2 is standard galvanized steel sheet weight
     system_volume = systemh*((building_l+(2*systemw))*(building_w+(2*systemw))-(building_l*building_w))
     system_cfm = system_volume*35.3147*circulation_min
@@ -288,61 +294,46 @@ def duct_fans_info(f_hvac_cfm=12000,il_fan_speed=10,il_kw=.2,shape='square',
 
 def cap_cost(max_btu_required=396711.65, dess_factor=20, duct_kg=13876.84, num_circ_fans=13, num_il_fans=24,
              num_vents=24, steel_price=.6, circ_fan_price=125, il_fan_price=150, vent_price=20,
-             main_unit_price=.075, installation_factor=1.25):
+             main_unit_price=.075, installation_factor=1.25,floors=1):
     vent_cost = vent_price*num_vents
     il_fan_cost = il_fan_price*num_il_fans
     circ_fan_cost = circ_fan_price*num_circ_fans
     duct_cost = duct_kg*steel_price
-    main_cost = main_unit_price*max_btu_required*dess_factor
+    main_cost = main_unit_price*max_btu_required*dess_factor*(floors**.95)
     capital_cost = (vent_cost+il_fan_cost+circ_fan_cost+duct_cost+main_cost)*installation_factor
     return capital_cost,vent_cost,il_fan_cost,circ_fan_cost,duct_cost,main_cost
 
 
 def refr_op_cost(kw_price=.18,day_hours=12,weeks_on=40,
-                 cop_refr=3.5,day_btu=396711.65,night_btu=100603.59):
+                 cop_refr=3.5,day_btu=396711.65,night_btu=100603.59,floors=1):
     main_unit_day = (day_btu/cop_refr)*.000293*day_hours*7*weeks_on*kw_price
     main_unit_night = (night_btu/cop_refr)*.000293*(24-day_hours)*7*weeks_on*kw_price
-    main_unit_total = main_unit_day+main_unit_night
+    main_unit_total = (main_unit_day+main_unit_night)*floors
     return main_unit_total
 
 
 def dess_op_cost(c_gas_p=8.04972,i_gas_p=4.16472,ic_factor=.5,day_hours=12,
-                 weeks_on=40,bio_btu=226000,cop_dess=1,day_btu=396711.65,night_btu=100603.59):
+                 weeks_on=40,bio_kw=66.218,cop_dess=1,day_btu=396711.65,night_btu=100603.59,floors=1):
+    bio_btu=bio_kw/.000293
     real_bio_btu=cop_dess*bio_btu
     gas_price = (((c_gas_p-i_gas_p)*ic_factor)+i_gas_p)/1000000
     if bio_btu > night_btu:
         excess_btu = ((real_bio_btu-night_btu)*(24-day_hours))/day_hours
         final_btu = day_btu-bio_btu-excess_btu
         main_unit_day = (final_btu / cop_dess) * day_hours * 7 * weeks_on * gas_price
-        main_unit_total = main_unit_day
+        main_unit_total = main_unit_day*floors
     else:
         main_unit_day = ((day_btu-bio_btu)/cop_dess)*day_hours*7*weeks_on*gas_price
         main_unit_night = ((night_btu-bio_btu)/cop_dess)*(24-day_hours)*7*weeks_on*gas_price
-        main_unit_total = main_unit_day+main_unit_night
+        main_unit_total = (main_unit_day+main_unit_night)*floors
     return main_unit_total
 
 
 def fans_op_cost(circ_fan_kw=4,il_fan_kw=5,weeks_on=40,day_hours=12,
-                 kw_price=.18,day_btu=396711.65,night_btu=40241.44,**kwargs):
-    day_btu = get_supply(all(kwargs))[4]
-    night_btu = get_supply(all(kwargs))[4]
+                 kw_price=.18,day_btu=396711.65,night_btu=40241.44,floors=1):
     circ_fans_total = circ_fan_kw*24*7*weeks_on*kw_price
     il_fans_day = il_fan_kw * day_hours * 7 * weeks_on * kw_price
     il_fans_night = il_fan_kw * (night_btu/day_btu) * (24 - day_hours) * 7 * weeks_on * kw_price
     il_fans_total = il_fans_day+il_fans_night
-    fans_total = il_fans_total + circ_fans_total
+    fans_total = (il_fans_total + circ_fans_total)*floors
     return fans_total,il_fans_total,circ_fans_total
-
-
-def op_cost(type='dess', **kwargs):
-    foc = fans_op_cost(**kwargs)[0]
-    if type == 'dess':
-        doc = dess_op_cost(**kwargs)
-        oc = doc+foc
-    elif type == 'refr':
-        roc = refr_op_cost(**kwargs)
-        oc = roc+foc
-    else:
-        return 'error! type must be dess or refr'
-    return oc
-
