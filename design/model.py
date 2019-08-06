@@ -7,6 +7,7 @@ import hvac.model as hvac
 import conveyor.model as conveyor
 import nutrients.digester as digester
 import design.climate as climate
+import math
 import pandas as pd
 
 cases = []
@@ -19,7 +20,8 @@ default_params = {'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':30,'pro
                      'amb_day_RH':70,'amb_night_RH':85,'pro_night_C':27,'pro_night_RH':85,
                      'rainfall_mm_wk':40,'angle_max':90,'cloud_cover':0.25,'daylight_hrs':10,
                      '24hr_avg':{},'24hr_max':{},'day_avg':{},'night_avg':{}},
-          'prices':{'electricity_kwh':0.18,'fruit_USD_kg':2.86},
+          'prices':{'electricity_kwh':0.18,'fruit_USD_kg':2.86,
+                    'labor_unsk_USD_hr':7.14,'labor_skill_premium':4.9},
           'structure':{'num_floors':1,'height_m':2.8,'building_L':150,'building_W':15},
           'tower':{'plant_spacing_cm':62,'plant_clearance_cm':35},
           'plants':{'harvest_extension':1,'rep_growth':0.25,'tsp_pct_leaf_energy':0.6,
@@ -35,7 +37,9 @@ default_params = {'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':30,'pro
                        'prices':{'thermal_energy_discount':0.9,
                                  },
                        },
-          'maintenance':{},
+          'maintenance':{'hours_per_tower':2,'digester_hrs_1000m2':160,
+                         'hvac_hrs_1000m2':120,'robot_hrs_1000m2':120,
+                         'engineer_hrs_1000m2':30},
           'config':{'period':'A'},
           'capex':{'total':750000,'structure':0,'tower':0,'conveyor':100000,
                    'robot':0,'hvac':100000,'nutrient':100000},
@@ -86,7 +90,7 @@ def run():
 
     nutrients_update(case_params)
     case_params['hvac'] = hvac_update(case_params)
-    #maintenance
+    case_params['maintenance'] = maintenance_update(case_params)
     financials_update(case_params)
     kpi_update(case_params)
 
@@ -146,7 +150,7 @@ def hvac_update(params):
     bio_mj_day = params['nutrients']['biogas_rate_MJ_d']
     bio_kw = 1000*bio_mj_day/24/60/60
     hvac_params['bio_kw']=bio_kw
-    hvac_params['t_rate']= (1/1000)*params['plants']['tsp_max_daily']
+    hvac_params['t_rate']= (1/1000)*params['plants']['tsp_daymax_ml_pl_min']
     hvac_params['insolence']= (1/1000)*params['light']['insolence_W_m2']
     building_l= params['structure']['building_L']
     building_w= params['structure']['building_W']
@@ -183,7 +187,7 @@ def conveyor_update(params):
     conveyor_params['building_w']=params['structure']['building_W']
     conveyor_params['systemw']=params['structure']['width_m']
     conveyor_params['kw_price']=params['prices']['electricity_kwh']
-    conveyor_params['weeks_on']=params['plants']['fr_harvest_weeks']
+    conveyor_params['weeks_on']=params['plants']['weeks_on']
     conveyor_params=conveyor.update(conveyor_params)
     return conveyor_params
 
@@ -194,6 +198,35 @@ def nutrients_update(case_params):
     case['supply_N_gpd'] = case_params['plants']['total_n_g_d']
     case_params['nutrients'] = digester.update(case)
 
+
+def maintenance_update(params):
+    global case_params
+    maint = case_params['maintenance'].copy()
+    maint['prices'] = case_params['prices'].copy()
+
+    A_m2 = params['structure']['facade_GFA']
+    N_1000m2 = math.ceil(A_m2/1000)
+    num_towers = params['tower']['num_towers']
+
+    tower_hrs = maint['hours_per_tower']*num_towers
+    digester_hrs = maint['digester_hrs_1000m2']*N_1000m2
+    hvac_hrs = maint['hvac_hrs_1000m2']*N_1000m2
+    robot_hrs = maint['robot_hrs_1000m2']*N_1000m2
+    engineer_hrs = maint['engineer_hrs_1000m2']*N_1000m2
+
+    unskilled_hrs = tower_hrs+digester_hrs+hvac_hrs+robot_hrs
+    skilled_hrs = engineer_hrs
+
+    labor_unsk_USD_hr = maint['prices']['labor_unsk_USD_hr']
+    skill_premium = maint['prices']['labor_skill_premium']
+    labor_USD = labor_unsk_USD_hr*(skilled_hrs*skill_premium+unskilled_hrs)
+
+    maint['N_1000m2'] = N_1000m2
+    maint['skilled_hrs'] = skilled_hrs
+    maint['unskilled_hrs'] = unskilled_hrs
+    maint['opex']['total_USD'] = labor_USD
+
+    return maint
 
 def financials_update(params):
     global case_params
@@ -222,7 +255,7 @@ def financials_update(params):
         opex['hvac']= params['hvac']['opex']['total_usd_dess']
     else:
         opex['hvac'] = params['hvac']['opex']['total_usd_refr']
-    #opex['maintenance']
+    opex['maintenance'] = params['maintenance']['opex']['total_USD']
     opex['total'] = sum([opex[x] for x in opex if not x == 'total'])
 
     #revenue
