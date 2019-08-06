@@ -6,22 +6,25 @@ import robot.model as rbt
 import hvac.model as hvac
 import conveyor.model as conveyor
 import nutrients.digester as digester
+import design.climate as climate
 import pandas as pd
 
 cases = []
 report = None
+SUBGROUPS = ['climate','prices','structure','tower'
+              'plants','robot','conveyor','hvac','nutrients',
+              'maintenance','config','capex','opex','revenue','kpi']
 
-default_params = {'light':{'angle_max':90,'cloud_cover':0.25,
-                           'daylight_hrs':10,'ps_dli':72,'insolence_W_m2':335},
-          'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':27,'pro_day_RH':75,
-                     'amb_day_RH':70,'amb_night_RH':85,'pro_night_C':25,'pro_night_RH':85,
-                     'rainfall_mm_wk':40,
+default_params = {'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':30,'pro_day_RH':80,
+                     'amb_day_RH':70,'amb_night_RH':85,'pro_night_C':27,'pro_night_RH':85,
+                     'rainfall_mm_wk':40,'angle_max':90,'cloud_cover':0.25,'daylight_hrs':10,
                      '24hr_avg':{},'24hr_max':{},'day_avg':{},'night_avg':{}},
           'prices':{'electricity_kwh':0.18,'fruit_USD_kg':2.86},
           'structure':{'num_floors':1,'height_m':2.8,'building_L':150,'building_W':15},
           'tower':{'plant_spacing_cm':62,'plant_clearance_cm':35},
-          'plants':{'leaf_ccr':0.6,'fr_harvest_weeks':40,'rep_growth':0.25,
-                    'tsp_mL_pl_d':220,'tsp_max_daily':4},
+          'plants':{'harvest_extension':1,'rep_growth':0.25,'tsp_pct_leaf_energy':0.6,
+                    'Ca_ubar':370,'leaf_light_capture':0.37,'LAI_pct':0.8,'leaf_allocation':0.35,
+                    'tsp_mL_pl_d':220,'tsp_daymax_ml_pl_min':6.5,'ambient_climate':False},
           'robot':{'num_towers': 186,'trays_per_tower': 4,'fruit_pl_d_day': .56},
           'conveyor':{'num_towers':186,'rpd':20,'weeks_on':40},
           'hvac':{'f_hvac_cfm':40000,'bio_kw':66.218,'t_rate':.00296,'num_towers':186,'weeks_on':40,
@@ -49,34 +52,31 @@ default_params = {'light':{'angle_max':90,'cloud_cover':0.25,
 
 case_params = {}
 
-def run_cases(cases):
-    global report
-    for c in cases:
-        for x in c:
-            if not c[x] == {}:
-                for k in c[x]:
-                    case_params[x][k] = c[x][k]
-        update()
-        c.update(case_params)
-    report = pd.DataFrame.from_records(cases)
 
 def setup():
-    global case_params, default_parameters
+    global case_params
     case_params = default_params.copy()
 
 
 def update(params=None):
     setup()
     global case_params
-    if params is not None:
+    if not params is None:
         for p in params:
-            case_params[p] = params[p]
+            if p in case_params:
+                if isinstance(case_params[p],dict):
+                    for s in params[p]:
+                        case_params[p][s] = params[p][s]
+                else:
+                    case_params[p] = params[p]
+            else:
+                case_params[p] = params[p]
     run()
     return case_params.copy()
 
 def run():
     global case_params
-    case_params['light'] = light.update(case_params['light'])
+    case_params['climate'] = climate.update(case_params['climate'])
     case_params['structure'] = structure.update(case_params['structure'])
     case_params['tower'] = tower_update(case_params) #for structure
     case_params['plants'] = plants_update(case_params)
@@ -105,10 +105,10 @@ def tower_update(params):
 def plants_update(params):
     #net dli inside greenhouse
     plants_params = params['plants'].copy()
-    tsm = params['structure']['wall_transmissivity']
-    plants_params['ps_dli'] = tsm*params['light']['ps_dli']
+    plants_params['wall_transmissivity'] = params['structure']['wall_transmissivity']
 
     #climate
+    plants_params['hourly'] = params['climate']['hourly'].copy()
     climate_keys = ['pro_day_C','pro_day_RH','pro_night_C','pro_night_RH']
     for k in climate_keys:
         plants_params[k] = params['climate'][k]

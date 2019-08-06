@@ -5,6 +5,7 @@ from utils.num_methods import newton
 from utils import chemistry as chem
 import psypy.psySI as si
 from fryield import fvcb as fvcb
+from design import climate as climate
 
 CONSTANTS = {'water_g_cm3':1,
              'MW_H2O':18.02,
@@ -13,34 +14,47 @@ CONSTANTS = {'water_g_cm3':1,
 
 STAT_GROUPS = ['24hr_avg','24hr_max','day_avg','night_avg']
 STAT_FIELDS = ['T_C','RH','irradiance_W_m2','ppfd_umol_m2_s']
+SUBGROUPS = [] + STAT_GROUPS
 
 default_params = {'ps_max_molCO2_m2_d':0.17,
-                  'mature_wks':8,
-                  'wall_transmissivity':0.8,
-                  'biomass_g_molCO2':120,
+                  'tsp_daymax_ml_pl_min':2.69,
+                  'LA_m2':1.33,
+                  'pro_day_C':30,
+                  'pro_day_RH':80,
+                  'pro_night_C':27,
+                  'pro_night_RH':80,
+                  'mature_wk':8,
+                  'fw0_g': 10,
+                  'fw_mature_g':670,
+                  'plant_spacing_cm': 65,
                   'canopy_decay':0.75,
-                  'dm0_g': 2.5,
-                  'A_m2': 1.7,
+                  'leaf_light_capture':0.37,
+                  'tsp_pct_leaf_energy':0.6,
                   'LAI_max': 3,
                   'LAI_pct': 0.8,
                   'leaf_allocation0': 0.5,
                   'leaf_allocation': 0.35,
+                  'Ca_ubar':370,
+                  'ambient_climate':True,
+                  'pull_climate_data':True,
+                  'daylight_hpd':12,
+                  'wall_transmissivity':0.8,
                   'leaf_th_nm':110,
                   'leaf_SG':0.6,
-                  'leaf_light_capture':0.37,
-                  'tsp_pct_leaf_energy':0.6,
+                  'biomass_g_molCO2':120,
+                  'A_m2': 0.42,
                   'water_stress':0,
                   'p_abs_kPa':101.325,
                   'gs_min_mol_m2_s':0.015,
                   'gs_max_mol_m2_s':0.3,
                   'Ci_ubar':230,
                   'Ci_min':30,
-                  'Ca_ubar':370,
                   'gb_mol_m2_s':3,
                   'gb_rel':1.37,
                   'gs_rel':1.6,
                   'photon_energy_umol_J':2.1,
                   'conductance_tuning':1,
+                  'hourly': {},
                   '24hr_avg': {},
                   '24hr_max': {},
                   'day_avg': {},
@@ -49,86 +63,107 @@ default_params = {'ps_max_molCO2_m2_d':0.17,
 
 case_params = {}
 
-def update_params(params=None):
+def setup():
     global case_params
-    if len(case_params)==0:
-        case_params = default_params.copy()
-        if not params is None:
-            for p in params:
-                case_params[p] = params[p]
+    case_params = default_params.copy()
 
-def run(params=None):
-    update_params(params)
-    #
-    #
-    #
+def update(**params):
+    global SUBGROUPS
+    setup()
+    if len(params)>0:
+        for p in params:
+            if p in SUBGROUPS:
+                for s in params[p]:
+                    case_params[p][s] = params[p][s]
+            else:
+                case_params[p] = params[p]
+    run(**params)
+    return case_params.copy()
+
+
+def run(**kwargs):
+    global case_params
+    model_args = ['pull_climate_data']
+    for arg in model_args:
+        if not arg in kwargs:
+            kwargs[arg] = case_params[arg]
+    pull = kwargs['pull_climate_data']
+    if pull:
+        pull_climate_data()
+    set_leaf_daily_avg(**kwargs)
+    set_plant_daily_stats(**kwargs)
 
 """
     model adapted from literature reference :
     Goudriaan - expolinear growth equation to analyze resource capture
 """
 
+def set_leaf_daily_avg(**kwargs):
+    fields = STAT_FIELDS + ['tsp_mmol_m2_s', 'ps_umolCO2_m2_s']
+    set_leaf_hourly(**kwargs)
+    set_daily_stats_from_hourly(fields)
+
 def mature_growth(**kwargs):
-    update_params()
     global case_params
     model_args = ['LAI_pct']
     for arg in model_args:
         if not arg in kwargs:
             kwargs[arg] = case_params[arg]
     LAI_pct = kwargs['LAI_pct']
-    dm,days_maturity = dm_at_LAI_pct(**kwargs)
-    return (dm,days_maturity)
+    fw,days_maturity = fw_at_LAI_pct(**kwargs)
+    return (fw,days_maturity)
 
-
-def dm_at_t(tf,**kwargs):
-    update_params()
+def fw_at_t(tf,**kwargs):
     global case_params
-    model_args = ['dm0_g','A_m2','leaf_allocation0','leaf_allocation']
+    model_args = ['fw0_g','A_m2','leaf_allocation0','leaf_allocation']
     for arg in model_args:
         if not arg in kwargs:
             kwargs[arg] = case_params[arg]
     A_m2 = kwargs['A_m2']
-    dm0 = kwargs['dm0_g']/A_m2
+    fw0 = kwargs['fw0_g']/A_m2
     kw3 = kwargs.copy()
     kw3['leaf_allocation'] = 0.5*(kwargs['leaf_allocation0']+kwargs['leaf_allocation'])
-    LAI0 = LAI_from_w(dm0,stage='initial',**kwargs)
+    LAI0 = LAI_from_w(fw0,stage='initial',**kwargs)
     LAI = LAI_at_t(tf,LAI0,stage='final',**kwargs)
-    dm = dm_from_LAI(LAI,**kw3)*A_m2
-    return dm
+    fw = fw_from_LAI(LAI,**kw3)*A_m2
+    return fw
 
 
-def dm_at_LAI_pct(LAI_pct,hfull=0.25,**kwargs):
+def fw_at_LAI_pct(LAI_pct,hfull=0.25,pct_min=0.2,pct_max=0.8,**kwargs):
     def LAI_wrapper(tf,kwargs):
         LAI_p = LAI_pct_max(tf,**kwargs)
         return LAI_p
-    update_params()
     global case_params
-    model_args = ['mature_wks']
+    model_args = ['mature_wk']
     for arg in model_args:
         if not arg in kwargs:
             kwargs[arg] = case_params[arg]
-    t_guess = kwargs['mature_wks']*7
-    result = newton(LAI_wrapper,LAI_pct,t_guess,kwargs,hfull=hfull)
+    t_guess = kwargs['mature_wk']*7*0.3
+    result = newton(LAI_wrapper,LAI_pct,t_guess,kwargs,hfull=hfull,ymin=pct_min,ymax=pct_max)
     tf = result[0]
-    dm = dm_at_t(tf,**kwargs)
-    return (dm,tf)
+    fw = fw_at_t(tf,**kwargs)
+    return (fw,tf)
 
 
 def LAI_pct_max(tf,**kwargs):
-    update_params()
     global case_params
-    model_args = ['dm0_g','A_m2','LAI_max']
+    model_args = ['fw0_g','plant_spacing_cm','LAI_max']
     for arg in model_args:
         if not arg in kwargs:
             kwargs[arg] = case_params[arg]
-    A_m2 = kwargs['A_m2']
-    dm0 = kwargs['dm0_g']/A_m2
-    LAI0 = LAI_from_w(dm0,**kwargs)
+    s_cm = kwargs['plant_spacing_cm']
+    A_m2 = plant_area_from_spacing(s_cm)
+    fw0 = kwargs['fw0_g']/A_m2
+    LAI0 = LAI_from_w(fw0,**kwargs)
     LAI_max = kwargs['LAI_max']
     LAI = LAI_at_t(tf,LAI0,**kwargs)
     pct = LAI/LAI_max
+    case_params['A_m2'] = A_m2
     return pct
 
+def plant_area_from_spacing(spacing_cm):
+    A_m2 = math.pi*(spacing_cm/100)**2
+    return A_m2
 
 def LAI_at_t(tf,LAI0,**kwargs):
     def dydt(t,y):
@@ -141,13 +176,12 @@ def LAI_at_t(tf,LAI0,**kwargs):
 
 def set_initial_LAI():
     global case_params
-    dm0 = case_params['dm0_m2']/case_params['A_m2']
-    LAI0 = LAI_from_w(dm0)
+    fw0 = case_params['fw0_m2']/case_params['A_m2']
+    LAI0 = LAI_from_w(fw0)
     case_params['LAI0'] = LAI0
 
 
-def dm_from_LAI(LAI,stage='final',**kwargs):
-    update_params()
+def fw_from_LAI(LAI,stage='final',**kwargs):
     global case_params
     model_args = ['leaf_allocation','leaf_allocation0','leaf_th_nm','leaf_SG']
     for arg in model_args:
@@ -160,12 +194,11 @@ def dm_from_LAI(LAI,stage='final',**kwargs):
     th_um = kwargs['leaf_th_nm'] ; sg = kwargs['leaf_SG']
     g_m2 = leaf_density(th_um,sg)
     s = 1/g_m2
-    dm = LAI*1/(s*pl)
-    return dm
+    fw = LAI*1/(s*pl)
+    return fw
 
 
 def LAI_from_w(w_g,stage='final',**kwargs):
-    update_params()
     global case_params
     model_args = ['leaf_allocation','leaf_allocation0','leaf_th_nm','leaf_SG']
     for arg in model_args:
@@ -181,11 +214,10 @@ def LAI_from_w(w_g,stage='final',**kwargs):
     LAI = w_g*s*pl
     return LAI
 
+def extinction(k,L):
+    return 1-math.exp(-k*L)
 
 def LAI_growth_rate_d(LAI,**kwargs):
-    def extinction(k,L):
-        return 1-math.exp(-k*L)
-    update_params()
     global case_params
     model_args = ['biomass_g_molCO2','ps_max_molCO2_m2_d',
                   'canopy_decay','LAI_max',
@@ -205,12 +237,118 @@ def LAI_growth_rate_d(LAI,**kwargs):
     growth_rate = pl*s*c*f
     return growth_rate
 
+def set_plant_daily_stats(**kwargs):
+    global case_params
+    kwargs['ps_max_molCO2_m2_d'] = case_params['24hr_avg']['ps_umolCO2_m2_s']*3600*24*10**-6
+    (size_g, days) = mature_growth(**kwargs)
+    kwargs['mature_wk'] = days/7
+    kwargs['fw_mature_g'] = size_g
+    case_params['mature_wk'] = kwargs['mature_wk']
+    case_params['fw_mature_g'] = kwargs['fw_mature_g']
+    LA_m2 = leaf_area_to_plant(**kwargs)
+    case_params['LA_m2'] = LA_m2
+    MW_H2O = CONSTANTS['MW_H2O']
+    daily = {}
+    for stat in STAT_GROUPS:
+        daily[stat] = case_params[stat].copy()
+        daily[stat]['ps_molCO2_pl_d'] = daily[stat]['ps_umolCO2_m2_s']*LA_m2*3600*24*10**-6
+        daily[stat]['tsp_ml_pl_min'] = daily[stat]['tsp_mmol_m2_s']*LA_m2*MW_H2O*60*10**-3
+        case_params[stat] = daily[stat]
+
+
+def set_daily_stats_from_hourly(fields,**kwargs):
+    global case_params
+    model_args = ['daylight_hpd','pro_day_C','ambient_climate',
+                  'pro_day_RH','pro_night_C','pro_night_RH']
+
+    for arg in model_args:
+        if not arg in kwargs:
+            kwargs[arg] = case_params[arg]
+    amb = kwargs['ambient_climate']
+    pro_T_C = (kwargs['pro_day_C'],kwargs['pro_night_C'])
+    pro_RH = (kwargs['pro_day_RH'],kwargs['pro_night_RH'])
+    hourly = case_params['hourly']
+    daylight_hpd = kwargs['daylight_hpd']
+    morning_hr = 12-int(0.5*daylight_hpd)
+    evening_hr = 12+int(0.5*daylight_hpd)
+    day24hr_avg = [] ; day24hr_max = []
+    day_avg = [] ; night_avg = []
+    for stat in fields:
+        if (stat in ['T_C','RH']) and (not amb):
+            if stat=='T_C':
+                day24hr_avg = 1/24*(daylight_hpd*pro_T_C[0]+(24-daylight_hpd)*pro_T_C[1])
+                day24hr_max = max(pro_T_C)
+                day_avg = pro_T_C[0] ; night_avg = pro_T_C[1]
+            elif stat=='RH':
+                day24hr_avg = 1/24*(daylight_hpd*pro_RH[0]+(24-daylight_hpd)*pro_RH[1])
+                day24hr_max = max(pro_RH)
+                day_avg = pro_RH[0] ; night_avg = pro_RH[1]
+        else:
+            day24hr_avg = sum(hourly[stat]) / 24
+            day24hr_max = max(hourly[stat])
+            day_avg = sum(hourly[stat][morning_hr:evening_hr]) / daylight_hpd
+            night_avg = (sum(hourly[stat][:morning_hr])
+                         + sum(hourly[stat][evening_hr:])) / (24 - daylight_hpd)
+        case_params['24hr_avg'][stat] = day24hr_avg
+        case_params['24hr_max'][stat] = day24hr_max
+        case_params['day_avg'][stat] = day_avg
+        case_params['night_avg'][stat] = night_avg
+    if not amb:
+        for stat in STAT_GROUPS:
+            I = case_params[stat]['irradiance_W_m2'] ;  T_C = case_params[stat]['T_C']
+            RH = case_params[stat]['RH'] ; ppfd = case_params[stat]['ppfd_umol_m2_s']
+            case_params[stat]['ps_umolCO2_m2_s'] = net_assimilation_rate(T_C,RH/100,I,ppfd,**kwargs)
+
+
+def set_leaf_hourly(**kwargs):
+    global case_params
+    hourly = case_params['hourly'].copy()
+    if len(hourly)>0:
+        hours = range(1,24)
+        T_C = hourly['T_C']
+        RH = hourly['RH']
+        I = hourly['irradiance_W_m2']
+        ppfd = hourly['ppfd_umol_m2_s']
+        tsp_mmol_m2_s = [leaf_transpiration_rate_mmol_m2_s(I[i],**kwargs) for i in range(len(hours))]
+        A_umol_m2_s = [net_assimilation_rate(T_C[i],
+                RH[i]/100,I[i],ppfd[i],**kwargs) for i in range(len(hours))]
+        hourly['tsp_mmol_m2_s'] = tsp_mmol_m2_s
+        hourly['ps_umolCO2_m2_s'] = A_umol_m2_s
+        case_params['hourly'] = hourly
+
+def pull_climate_data():
+    global case_params
+    climate_case = climate.update()
+    for grp in STAT_GROUPS+['hourly']:
+        case_params[grp] = climate_case[grp].copy()
+
+def leaf_area_to_plant(**kwargs):
+    global case_params
+    model_args = ['canopy_decay','LAI_max','LAI_pct','A_m2']
+    for arg in model_args:
+        if not arg in kwargs:
+            kwargs[arg] = case_params[arg]
+    LAI = kwargs['LAI_max']*kwargs['LAI_pct']
+    k = kwargs['canopy_decay'] ; A_m2 = kwargs['A_m2']
+    f = extinction(k,LAI)
+    plant_factor = f*A_m2
+    return plant_factor
+
+
 def plant_assimilation_rate(T_C,RH,I,ppfd,**kwargs):
-    pass
+    #umol_pl_s
+    leaf_m2_s = net_assimilation_rate(T_C,RH,I,ppfd,**kwargs)
+    plant_factor = leaf_area_to_plant(**kwargs)
+    pl_umol_s = leaf_m2_s*plant_factor
+    return pl_umol_s
 
 
-def plant_transpiration_rate(T_C,RH,I,ppfd,**kwargs):
-    pass
+def plant_transpiration_rate(I,**kwargs):
+    #mmol_pl_s
+    leaf_m2_s = leaf_transpiration_rate_mmol_m2_s(I,**kwargs)
+    plant_factor = leaf_area_to_plant(**kwargs)
+    pl_mmol_s = leaf_m2_s*plant_factor
+    return pl_mmol_s
 
 def net_assimilation_rate(T_C,RH,I,ppfd,**kwargs):
     #umol_m2_s
@@ -231,21 +369,20 @@ def net_assimilation_rate(T_C,RH,I,ppfd,**kwargs):
         residual = Ag-A
         return residual
     tol = 0.05 ; hfull=0.25
-    update_params()
     global case_params
     model_args = ['Ci_ubar','Ci_min','Ca_ubar','gb_rel',
-                  'gs_rel','gb_mol_m2_s']
+                  'gs_rel','gb_mol_m2_s','wall_transmissivity']
     for arg in model_args:
         if not arg in kwargs:
             kwargs[arg] = case_params[arg]
     Ci0 = kwargs['Ci_ubar']
-    A0 = fvcb.net_assimilation_rate(T_C,ppfd,Ci0,**kwargs)
+    tx_wall = kwargs['wall_transmissivity']
+    A0 = fvcb.net_assimilation_rate(T_C,ppfd*tx_wall,Ci0,**kwargs)
     A_umol_m2_s = newton(assim_wrapper,0,A0,kwargs,hfull=hfull,tolerance=tol)[0]
     return A_umol_m2_s
 
 def stomata_conductance_from_tsp(tsp_mmol_m2_s,vpd_kPa,**kwargs):
     #mol_m2_s
-    update_params()
     global case_params
     model_args = ['gs_min_mol_m2_s','gs_max_mol_m2_s',
         'p_abs_kPa','conductance_tuning']
@@ -263,7 +400,6 @@ def stomata_conductance_from_tsp(tsp_mmol_m2_s,vpd_kPa,**kwargs):
     return gs_mol_m2_s
 
 def leaf_transpiration_rate_mmol_m2_s(I,**kwargs):
-    update_params()
     global case_params
     model_args = ['tsp_pct_leaf_energy',
                   'leaf_light_capture',
@@ -283,7 +419,6 @@ def leaf_transpiration_rate_mmol_m2_s(I,**kwargs):
 
 def vapor_pressure_deficit(T_C,RH):
     #kPa
-    update_params()
     global case_params
     P = case_params['p_abs_kPa']
     psat = chem.antoine_psat(T_C)*P
