@@ -13,20 +13,22 @@ robot_parameters = {'num_towers': 183,
                     'prices':{'electricity_kwh':0.18},
                     }
 
-working_params = {}
+
+working_parameters = {}
 
 
 def update(params=None):
-    global SUBGROUPS
+    global SUBGROUPS, working_parameters
     setup()
     if params is not None:
         for p in params:
             if p in SUBGROUPS:
                 for s in params[p]:
-                    working_params[p][s] = params[p][s]
-            working_params[p] = params[p]
+                    working_parameters[p][s] = params[p][s]
+            else:
+                working_parameters[p] = params[p]
     run()
-    response = working_params.copy()
+    response = working_parameters.copy()
     response.update(result)
     return response
 
@@ -40,29 +42,29 @@ result = {'numR': 0,
 
 def run():
     global result
-    (numR, numL) = units_needed(working_params['num_towers'],
-                                working_params['trays_per_tower'],
-                                working_params['fruit_pl_d_day'],
-                                working_params['operation_hours'],
-                                working_params['robot_rate'])
+    (numR, numL) = units_needed(working_parameters['num_towers'],
+                                working_parameters['trays_per_tower'],
+                                working_parameters['fruit_pl_d_day'],
+                                working_parameters['operation_hours'],
+                                working_parameters['robot_rate'])
     result.update({'numL': numL, 'numR': numR})
     result['capex']['total_USD'] = cap_cost(result['numR'], result['numL'])
     result['opex']['total_USD'] = op_cost(result['numR'],
                            result['numL'],
-                           working_params['prices']['electricity_kwh'],
-                           working_params['operation_hours'],
-                           working_params['indirect_fixed'])
+                           working_parameters['prices']['electricity_kwh'],
+                           working_parameters['operation_hours'],
+                           working_parameters['indirect_fixed'])
 
 
 def setup():
-    global working_params, robot_parameters
-    working_params = robot_parameters
+    global working_parameters, robot_parameters
+    working_parameters = robot_parameters
 
 
 def run_cases(cases):
     for c in cases:
         for k in c:
-            working_params[k] = c[k]
+            working_parameters[k] = c[k]
         update()
         c.update(result)
 

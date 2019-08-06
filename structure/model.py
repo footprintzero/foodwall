@@ -5,8 +5,8 @@ default_params = {'num_floors':1,
                   'building_floors':20,
                   'height_m':2.8,
                   'width_m':1.5,
-                  'building_L':1.5,
-                  'building_W':1.5,
+                  'building_L':150,
+                  'building_W':15,
                   'wall_transmissivity':0.8,
                   'vbeam_spacing_m':1.6,
                   'beams_kg_m':10.61,
@@ -41,10 +41,10 @@ def run():
                  case_params['width_m'],case_params['height_m'],case_params['vbeam_spacing_m'],
                 case_params['num_floors'],case_params['building_floors'])
 
-    beam_L = get_beam_length(L,W,h,w,vb_space)
+    beam_L = Nfl*get_beam_length(L,W,h,w,vb_space)
     facade_GFA_m2 = facade_GFA(L,W,w,Nfl)
 
-    case_params['facade_L'] = Nfl*linear_length(L+0.5*w,W+0.5*w)
+    case_params['facade_L'] = Nfl*linear_length(L+w,W+w)
     case_params['beam_L'] = beam_L
     case_params['building_GFA'] = building_GFA(L,W,Blfl)
     case_params['facade_GFA'] = facade_GFA_m2
