@@ -204,6 +204,7 @@ def financials_update(params):
     opex = case_params['opex'].copy()
     revenue = case_params['revenue'].copy()
 
+
     #capex
     capex['structure'] = params['structure']['capex']['structure_USD']
     capex['tower'] = params['tower']['capex']['towers_USD']
