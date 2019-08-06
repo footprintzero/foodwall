@@ -177,12 +177,15 @@ def hvac_update(params):
 def conveyor_update(params):
     conveyor_params=params['conveyor'].copy()
     floors=params['structure']['num_floors']
+    conveyor_params['op_hours']=params['robot']['op_hours']
     conveyor_params['floors']=floors
     conveyor_params['num_towers']=(params['tower']['num_towers'])/floors
     conveyor_params['building_l']=params['structure']['building_L']
     conveyor_params['building_w']=params['structure']['building_W']
     conveyor_params['systemw']=params['structure']['width_m']
-    conveyor_params['kw_price']=params['prices']['electricity_kwh']
+    p=params['prices'].copy()
+    p.pop('fruit_USD_kg')
+    conveyor_params['prices']=p
     conveyor_params['weeks_on']=params['plants']['fr_harvest_weeks']
     conveyor_params=conveyor.update(conveyor_params)
     return conveyor_params
@@ -201,10 +204,11 @@ def financials_update(params):
     opex = case_params['opex'].copy()
     revenue = case_params['revenue'].copy()
 
+
     #capex
     capex['structure'] = params['structure']['capex']['structure_USD']
     capex['tower'] = params['tower']['capex']['towers_USD']
-    capex['robot'] = params['robot']['capex']['total_USD']
+    capex['robot'] = params['robot']['capex']['total_usd']
     capex['nutrients'] = params['nutrients']['capex']['total_USD']
     capex['conveyor'] = params['conveyor']['capex']['total_usd']
     if params['hvac']['true_for_dess']:
@@ -215,7 +219,7 @@ def financials_update(params):
 
     #opex
     opex['tower'] = params['tower']['opex']['total']
-    opex['robot'] = params['robot']['opex']['total_USD']
+    opex['robot'] = params['robot']['opex']['total_usd']
     opex['nutrients'] = params['nutrients']['opex']['total_USD']
     opex['conveyor']= params['conveyor']['opex']['total_usd']
     if case_params['hvac']['true_for_dess']:

@@ -73,3 +73,4 @@ def quadratic_roots(a,b,c):
             x_m = 0.5*1/a *( -b - math.sqrt(radical))
             x_p = 0.5*1/a *( -b + math.sqrt(radical))
     return (x_m,x_p)
+
