@@ -203,6 +203,7 @@ def nutrients_update(case_params):
 
 def maintenance_update(params):
     global case_params
+    
     maint = case_params['maintenance'].copy()
     maint['prices'] = case_params['prices'].copy()
 
