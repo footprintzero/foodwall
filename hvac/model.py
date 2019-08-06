@@ -52,7 +52,7 @@ hvac_parameters = {
                    'night_btu':40241.44,
                    'floors':1,
                    'true_for_dess':True,
-                   'prices': {'kw_price': .18, 'c_gas_p': 8.04972, 'i_gas_p': 4.16472,
+                   'prices': {'electricity_kwh': .18, 'c_gas_p': 8.04972, 'i_gas_p': 4.16472,
                               'steel_price': .6, 'circ_fan_price': 125, 'il_fan_price': 150,
                               'vent_price': 20, 'main_unit_price': .075, 'dess_factor': 20,
                               'installation_factor': 1.25, 'ic_factor': .5},
@@ -152,7 +152,7 @@ def run():
     capex['main_unit_refr']=(mc/v)
     capex['total_usd_refr']= prices['installation_factor']*((mc/v)+dc+cfc+ifc+vc)
     [tfo,cfo,ifo]=fans_op_cost(ck,ik,working_params['weeks_on'],working_params['day_hours'],
-                               prices['kw_price'],mb,mbn,working_params['floors'])
+                               prices['electricity_kwh'],mb,mbn,working_params['floors'])
     opex['circ_fans']=ifo
     opex['il_fans']=cfo
     desso = dess_op_cost(prices['c_gas_p'],prices['i_gas_p'],prices['ic_factor'],
@@ -163,7 +163,7 @@ def run():
         desso=0
     opex['main_unit_dess'] = desso
     opex['total_usd_dess']=desso+tfo
-    refro = refr_op_cost(prices['kw_price'],working_params['day_hours'],working_params['weeks_on'],
+    refro = refr_op_cost(prices['electricity_kwh'],working_params['day_hours'],working_params['weeks_on'],
                          working_params['cop_refr'],mb,mbn,working_params['floors'])
     opex['main_unit_refr']=refro
     opex['total_usd_refr']=refro+tfo
