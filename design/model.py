@@ -9,6 +9,7 @@ import nutrients.digester as digester
 import design.climate as climate
 import pandas as pd
 
+
 cases = []
 report = None
 SUBGROUPS = ['climate','prices','structure','tower'
