@@ -18,6 +18,7 @@ default_params = {'daylight_hpd':12,
                   'resolution_hrs': 3,
                   'location_name': 'Singapore',
                   'climate_month': 7,
+                  'hourly':{},
                   }
 
 
@@ -78,15 +79,18 @@ def get_daily_statistics(stat='daily_avg',**kwargs):
     values = []
     for field in tbl_fields:
         field_value = 0
+        field_values = cltbl[field]
         if stat == '24hr_avg':
-            field_value = cltbl[field].mean()
+            field_value = field_values.mean()
+            stat_field = STAT_FIELDS[tbl_fields.index(field)]
+            case_params['hourly'][stat_field] = list(field_values)
         elif stat == '24hr_max':
-            field_value = cltbl[field].max()
+            field_value = field_values.max()
         elif stat == 'day_avg':
-            field_value = cltbl[field].loc[12-half_day:12+half_day].mean()
+            field_value = field_values.loc[12-half_day:12+half_day].mean()
         elif stat == 'night_avg':
-            morning_value = cltbl[field].loc[:12-half_day].mean()
-            night_value = cltbl[field].loc[12+half_day:].mean()
+            morning_value = field_values.loc[:12-half_day].mean()
+            night_value = field_values.loc[12+half_day:].mean()
             field_value = 0.5*(morning_value+night_value)
         values.append(field_value)
     stats = dict(zip(STAT_FIELDS,values))

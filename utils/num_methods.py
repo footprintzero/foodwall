@@ -1,7 +1,8 @@
 import math
 from scipy.integrate import solve_ivp
 
-def newton(fun_handle,y,x0,params={},hfull=1,dh=0.001,tolerance=0.001,maxiter=100,ymax=None,xrange=None):
+def newton(fun_handle,y,x0,params={},hfull=1,dh=0.001,tolerance=0.001,maxiter=100,
+           ymax=None,ymin=None,xrange=None):
     def y_at_x(x,dh):
         ym = fun_handle(x - 0.5 * dh, params)
         yp = fun_handle(x + 0.5 * dh, params)
@@ -22,9 +23,17 @@ def newton(fun_handle,y,x0,params={},hfull=1,dh=0.001,tolerance=0.001,maxiter=10
             step = h *e0 / dydx
             xt = x - step
             (y0, ym, yp, e0, e, dydx) = y_at_x(xt, dh)
-            if not ymax is None:
+            if not ((ymin is None) and (ymax is None)):
                 a = 0
-                while (((ym > ymax) or (yp > ymax)) and (a<maxiter)):
+                if ymin is None: #only ymax
+                    stop_condition = ((ym > ymax) or (yp > ymax))
+                elif ymax is None: #only ymin
+                    stop_condition = ((ym < ymin) or (yp < ymin))
+                else: #both
+                    stop_max = ((ym > ymax) or (yp > ymax))
+                    stop_min = ((ym < ymin) or (yp < ymin))
+                    stop_condition = (stop_min and stop_max)
+                while (stop_condition and (a<maxiter)):
                     h = 0.5*h
                     step = h * e0 / dydx
                     xt = x - step
