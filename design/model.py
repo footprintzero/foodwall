@@ -25,7 +25,7 @@ default_params = {'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':30,'pro
           'plants':{'harvest_extension':1,'rep_growth':0.25,'tsp_pct_leaf_energy':0.6,
                     'Ca_ubar':370,'leaf_light_capture':0.37,'LAI_pct':0.8,'leaf_allocation':0.35,
                     'tsp_mL_pl_d':220,'tsp_daymax_ml_pl_min':6.5,'ambient_climate':False},
-          'robot':{'num_towers': 186,'trays_per_tower': 4,'fruit_pl_d_day': .56},
+          'robot':{'num_towers': 186,'trays_per_tower': 4,'fruit_pl_d_day': .56,'prices':{}},
           'conveyor':{'num_towers':186,'rpd':20,'weeks_on':40},
           'hvac':{'f_hvac_cfm':40000,'bio_kw':66.218,'t_rate':.00296,'num_towers':186,'weeks_on':40,
                   'true_for_dess':True},
@@ -129,10 +129,10 @@ def plants_update(params):
 
 def robot_update(params):
     robot_params = params['robot'].copy()
+    robot_params['prices'].update(params['prices'])
     robot_params['num_towers'] = params['tower']['num_towers']
     robot_params['trays_per_tower'] = params['tower']['trays_per_tower']
     robot_params['fruit_pl_d_day'] = params['plants']['rep_fruit_pl_d_day']
-    robot_params['prices'] = params['prices'].copy()
     robot_params = rbt.update(robot_params)
     return robot_params
 
@@ -146,8 +146,8 @@ def hvac_update(params):
     bio_mj_day = params['nutrients']['biogas_rate_MJ_d']
     bio_kw = 1000*bio_mj_day/24/60/60
     hvac_params['bio_kw']=bio_kw
-    hvac_params['t_rate']= (1/1000)*params['plants']['tsp_max_daily']
-    hvac_params['insolence']= (1/1000)*params['light']['insolence_W_m2']
+    hvac_params['t_rate']= (1/1000)*params['plants']['tsp_daymax_ml_pl_min']
+    hvac_params['insolence']= (1/1000)*params['climate']['24hr_max']['irradiance_W_m2']
     building_l= params['structure']['building_L']
     building_w= params['structure']['building_W']
     systemw= params['structure']['width_m']
@@ -168,7 +168,7 @@ def hvac_update(params):
     hvac_params['i_humidity_n']=(1/100)*params['climate']['pro_night_RH']
     hvac_params['a_humidity_d'] = (1 / 100) * params['climate']['amb_day_RH']
     hvac_params['a_humidity_n'] = (1 / 100) * params['climate']['amb_night_RH']
-    hvac_params['weeks_on']=params['plants']['fr_harvest_weeks']
+    hvac_params['weeks_on']=params['plants']['weeks_on']
     hvac_params['prices']=params['prices'].copy()
     hvac_params=hvac.update(hvac_params)
     return hvac_params
@@ -186,7 +186,7 @@ def conveyor_update(params):
     p=params['prices'].copy()
     p.pop('fruit_USD_kg')
     conveyor_params['prices']=p
-    conveyor_params['weeks_on']=params['plants']['fr_harvest_weeks']
+    conveyor_params['weeks_on']=params['plants']['weeks_on']
     conveyor_params=conveyor.update(conveyor_params)
     return conveyor_params
 
@@ -262,6 +262,7 @@ def kpi_update(params):
     kpi['capex'] = params['capex']['total']
 
     kpi['capex_m2'] = kpi['capex']/kpi['facade_wall_area']
+    kpi['opex_m2'] = kpi['opex']/kpi['facade_wall_area']
     kpi['capex_tower'] = kpi['capex']/kpi['num_towers']
 
     kpi['profit'] = kpi['revenue']-kpi['opex']
