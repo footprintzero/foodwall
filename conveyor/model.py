@@ -4,11 +4,10 @@ import math as m
 SUBGROUPS = ['prices','energy','capex','opex']
 
 conveyor_params={
-    'num_towers': 185,
+    'num_towers': 186,
     'building_l': 150,
     'building_w': 15,
     'rpd': 20,  # rotations per day
-    'lub_amount': 3,
     'floors': 1,
     'op_hours': 18,
     'd_pull_c': 750,  # driver pull capacity in pounds
@@ -21,9 +20,8 @@ conveyor_params={
     'tower_lbs':150,
     'pendant_lbs':2,
     'weeks_on':40,
-    'kw_price':.18,
     'prices':{'track': 44.5,'welding_jig': 123,'brackets': 90,'inspector': 313,'curves': 195,
-              'driver': 8527,'chain': 30.9,'lubricator': 4768,'pendants': 53,},
+              'driver': 8527,'chain': 30.9,'lubricator': 4768,'pendants': 53,'electricity_kwh':.18},
     'energy':{'total_kwh_year': 5100},
     'capex':{'total_usd': 127830},
     'opex':{'total_usd': 1742,'lubricant_op': 920,'driver_op': 821},
@@ -40,10 +38,15 @@ def setup():
 
 
 def update(params=None):
+    global SUBGROUPS
     setup()
     if params is not None:
         for p in params:
-            wp[p] = params[p]
+            if p in SUBGROUPS:
+                for s in params[p]:
+                    wp[p][s] = params[p][s]
+            else:
+                wp[p] = params[p]
     run()
     return wp.copy()
 
@@ -55,7 +58,7 @@ def run():
                    d_pull_c=wp['d_pull_c'],cw_lb_ft=wp['cw_lb_ft'],systemw=wp['systemw'])
     oc = op_costs(driver_kw=wp['driver_kw'],driver_max_speed=wp['driver_max_speed'],op_hours=wp['op_hours'],
                   building_l=wp['building_l'],building_w=wp['building_w'],systemw=wp['systemw'],
-                  rpd=wp['rpd'],weeks_on=wp['weeks_on'],kw_price=wp['kw_price'],lubricant=wp['lubricant'],
+                  rpd=wp['rpd'],weeks_on=wp['weeks_on'],kw_price=wp['prices']['electricity_kwh'],lubricant=wp['lubricant'],
                   lub_rate=wp['lub_rate'],floors=wp['floors'],num_towers=wp['num_towers'],
                   tower_lbs=wp['tower_lbs'],pendant_lbs=wp['pendant_lbs'],d_pull_c=wp['d_pull_c'],
                   cw_lb_ft=wp['cw_lb_ft'])
@@ -64,6 +67,18 @@ def run():
     wp['opex']['lubricant_op']=oc[2]
     wp['opex']['driver_op']=oc[1]
     wp['capex']['total_usd']=cc[0]
+
+
+def run_cases(cases):
+    global report
+    for c in cases:
+        for k in c:
+            wp[k] = c[k]
+        update()
+        c.update(wp)
+    report = pd.DataFrame.from_records(cases)
+    return report
+
 
 def num_units(num_towers=186,building_l=150,building_w=15,tower_lbs=150,pendant_lbs=2,
               floors=1,d_pull_c=750,cw_lb_ft=3.3,systemw=1.5):
@@ -89,6 +104,7 @@ def curve_ll(angle,radius):
 def cap_costs(params,**kwargs):
     nu = num_units(**kwargs)
     prices = params['prices'].copy()
+    prices.pop('electricity_kwh')
     prices_l = [p for p in prices.values()]
     costs = [n*p for n, p in zip(nu, prices_l)]
     total = sum(costs)
