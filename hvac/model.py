@@ -7,6 +7,9 @@ import numpy as np
 SUBGROUPS = ['prices','energy','capex','opex']
 
 
+
+
+
 # hello world
 hvac_parameters = {
                    'bio_kw':66.218,
@@ -44,7 +47,7 @@ hvac_parameters = {
                    'systemh': 2.8,
                    'circulation_min': 1,
                    'circ_fan_cfm': 4000,
-                   'circ_kw': .3,
+                   'circ_kw': .2,
                    'il_space': 30,
                    'f_hvac_cfm': 40000,
                    'f_nv_cfm':0,
@@ -274,7 +277,7 @@ def hvac_wrapper_temp(F):
     return temp
 
 
-def duct_fans_info(f_hvac_cfm=12000,il_fan_speed=10,il_kw=.2,shape='square',
+def duct_fans_info(f_hvac_cfm=40000,il_fan_speed=10,il_kw=.2,shape='square',
                    building_l=150,building_w=15,systemw=1.5,systemh=2.8,
                    circulation_min=1,circ_fan_cfm=4000,circ_kw=.3,il_space=30):
     flow_metric = f_hvac_cfm*.000471947
@@ -289,7 +292,7 @@ def duct_fans_info(f_hvac_cfm=12000,il_fan_speed=10,il_kw=.2,shape='square',
         c_ducts = 4*r
         duct_m2 = c_ducts*2*(building_l + building_w+(2*systemw))
     num_il_fans = 2*m.ceil((2*(building_l + building_w+(2*systemw)))/il_space)
-    ikw=il_kw*(f_hvac_cfm/12000)
+    ikw=il_kw*(f_hvac_cfm/45000)
     il_fan_kw = num_il_fans*ikw
     duct_kg = duct_m2*6.86*2  # 6.86kg/m2 is standard galvanized steel sheet weight
     system_volume = systemh*((building_l+(2*systemw))*(building_w+(2*systemw))-(building_l*building_w))
@@ -303,12 +306,12 @@ def duct_fans_info(f_hvac_cfm=12000,il_fan_speed=10,il_kw=.2,shape='square',
 def cap_cost(max_btu_required=396711.65, dess_factor=20, duct_kg=13876.84, num_circ_fans=13, num_il_fans=24,
              num_vents=24, steel_price=.6, circ_fan_price=125, il_fan_price=150, vent_price=20,
              main_unit_price=.075, installation_factor=1.25,floors=1):
-    vent_cost = vent_price*num_vents
-    il_fan_cost = il_fan_price*num_il_fans
-    circ_fan_cost = circ_fan_price*num_circ_fans
-    duct_cost = duct_kg*steel_price
-    main_cost = main_unit_price*max_btu_required*dess_factor*(floors**.95)
-    capital_cost = (vent_cost+il_fan_cost+circ_fan_cost+duct_cost+main_cost)*installation_factor
+    vent_cost = vent_price*num_vents*installation_factor*2
+    il_fan_cost = il_fan_price*num_il_fans*installation_factor*2
+    circ_fan_cost = circ_fan_price*num_circ_fans*installation_factor*2
+    duct_cost = duct_kg*steel_price*installation_factor
+    main_cost = main_unit_price*max_btu_required*dess_factor*(floors**.95)*installation_factor
+    capital_cost = vent_cost+il_fan_cost+circ_fan_cost+duct_cost+main_cost
     return capital_cost,vent_cost,il_fan_cost,circ_fan_cost,duct_cost,main_cost
 
 
