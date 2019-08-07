@@ -26,11 +26,11 @@ default_params = {'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':30,'pro
           'tower':{'plant_spacing_cm':62,'plant_clearance_cm':35},
           'plants':{'harvest_extension':1,'rep_growth':0.25,'tsp_pct_leaf_energy':0.6,
                     'Ca_ubar':370,'leaf_light_capture':0.37,'LAI_pct':0.8,'leaf_allocation':0.35,
-                    'tsp_mL_pl_d':220,'tsp_daymax_ml_pl_min':6.5,'ambient_climate':False},
+                    'tsp_mL_pl_d':220,'tsp_daymax_ml_pl_min':6.5,'ambient_climate':True},
           'robot':{'num_towers': 186,'trays_per_tower': 4,'fruit_pl_d_day': .56,'prices':{}},
           'conveyor':{'num_towers':186,'rpd':20,'weeks_on':40,'prices':{}},
           'hvac':{'f_hvac_cfm':40000,'bio_kw':66.218,'t_rate':.00296,'num_towers':186,'weeks_on':40,
-                  'true_for_dess':True,'prices':{}},
+                  'nv_dess_refr':'nv','prices':{}},
           'nutrients':{'N_recovery':0.5,'supply_N_gpd':1084,
                        'biogas_yield_kJ_g':9.88,
                        'AN_capacity_factor_kgpd_m3':10,
@@ -186,6 +186,7 @@ def hvac_update(params):
 
 def conveyor_update(params):
     conveyor_params=params['conveyor'].copy()
+    conveyor_params['prices'].update(params['prices'])
     floors=params['structure']['num_floors']
     conveyor_params['op_hours']=params['robot']['op_hours']
     conveyor_params['floors']=floors
@@ -193,9 +194,7 @@ def conveyor_update(params):
     conveyor_params['building_l']=params['structure']['building_L']
     conveyor_params['building_w']=params['structure']['building_W']
     conveyor_params['systemw']=params['structure']['width_m']
-    p=params['prices'].copy()
-    p.pop('fruit_USD_kg')
-    conveyor_params['prices']=p
+    conveyor_params['prices']=params['prices'].copy()
     conveyor_params['weeks_on']=params['plants']['weeks_on']
     conveyor_params=conveyor.update(conveyor_params)
     return conveyor_params
@@ -274,10 +273,13 @@ def financials_update(params):
     capex['robot'] = params['robot']['capex']['total_usd']
     capex['nutrients'] = params['nutrients']['capex']['total_USD']
     capex['conveyor'] = params['conveyor']['capex']['total_usd']
-    if params['hvac']['true_for_dess']:
+    if case_params['hvac']['nv_dess_refr']=='dess':
         capex['hvac'] = params['hvac']['capex']['total_usd_dess']
-    else:
+    elif case_params['hvac']['nv_dess_refr']=='refr':
         capex['hvac'] = params['hvac']['capex']['total_usd_refr']
+    else:
+        capex['hvac'] = params['hvac']['capex']['circ_fans'] + \
+                       params['hvac']['capex']['il_fans'] + params['hvac']['capex']['vents']
     capex['nursery'] = params['nursery']['capex']['total_USD']
     capex['total'] = sum([capex[x] for x in capex if not x == 'total'])
 
@@ -286,10 +288,12 @@ def financials_update(params):
     opex['robot'] = params['robot']['opex']['total_usd']
     opex['nutrients'] = params['nutrients']['opex']['total_USD']
     opex['conveyor']= params['conveyor']['opex']['total_usd']
-    if case_params['hvac']['true_for_dess']:
+    if case_params['hvac']['nv_dess_refr']=='dess':
         opex['hvac']= params['hvac']['opex']['total_usd_dess']
-    else:
+    elif case_params['hvac']['nv_dess_refr']=='refr':
         opex['hvac'] = params['hvac']['opex']['total_usd_refr']
+    else:
+        opex['hvac'] = params['hvac']['opex']['circ_fans']+params['hvac']['opex']['il_fans']
     opex['maintenance'] = params['maintenance']['opex']['total_USD']
     opex['nursery'] = params['nursery']['opex']['total_USD']
     opex['total'] = sum([opex[x] for x in opex if not x == 'total'])
