@@ -7,7 +7,7 @@ from utils.num_methods import monte_carlo
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQL_OUTPUT = 'cases'
 PARAM_XFILENAME = 'parameters.xlsx'
-GROUPS = ['robot','conveyor','hvac','prices']
+GROUPS = ['robot','conveyor','hvac']
 ptbl = None
 
 WATCH_GROUP = 'kpi'
