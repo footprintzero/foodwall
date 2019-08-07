@@ -7,9 +7,6 @@ import numpy as np
 SUBGROUPS = ['prices','energy','capex','opex']
 
 
-
-
-
 # hello world
 hvac_parameters = {
                    'bio_kw':66.218,
