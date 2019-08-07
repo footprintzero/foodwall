@@ -1,9 +1,7 @@
-from sqlalchemy import create_engine
 import pandas as pd
 from pyppfd import solar as solar
+from design import database as db
 
-engine = None
-SQL_DB_NAME = 'sqlite:///foodwall.db'
 SQL_CLIMATE_TABLE = 'climate'
 CLIMATE_CSV_FILENAME = 'design\\climate_hourly.csv'
 CLIMATE_TABLE_FIELDS = ['hour','T DEG C','RH','month',
@@ -28,7 +26,6 @@ def setup():
     global case_params, default_parameters
     case_params = default_params.copy()
 
-
 def update(params=None):
     setup()
     global case_params
@@ -43,15 +40,12 @@ def run():
     set_daily_statistics()
 
 def load():
-    global engine
-    if engine is None:
-        engine = create_engine(SQL_DB_NAME,echo=False)
+    db.load()
 
 def get_climate_data():
-    global engine
     load()
     qrystr = 'select * from ' + SQL_CLIMATE_TABLE
-    tbl = pd.read_sql(qrystr,con=engine)
+    tbl = pd.read_sql(qrystr,con=db.engine)
     return tbl
 
 def set_daily_statistics(**kwargs):
@@ -109,7 +103,7 @@ def add_solar_records(**kwargs):
               (cltbl['month']==climate_month)].copy()
     solar_records = create_solar_records(cltbl.hour,**kwargs)
     tbl = pd.merge(cltbl,solar_records,on='hour')
-    tbl.to_sql(SQL_CLIMATE_TABLE, con=engine, if_exists='replace',index=False)
+    tbl.to_sql(SQL_CLIMATE_TABLE, con=db.engine, if_exists='replace',index=False)
 
 
 def create_solar_records(hours,**kwargs):
@@ -137,23 +131,7 @@ def get_hours(res_hrs=3):
     hours = [x+0.5*res_hrs for x in range(0,24,res_hrs)]
     return hours
 
-
 def add_climate_records():
-    global engine
     load()
     tbl = pd.read_csv(CLIMATE_CSV_FILENAME)
-    tbl.to_sql(SQL_CLIMATE_TABLE,con=engine,if_exists='replace',index=False)
-
-
-#'daily_avg': {'irradiance_W_m2': [], 'ppfd': [],
-#              'pro_T_C': [], 'pro_RH': [],
-#              'transpiration_pl_ml_hr': [], 'ps_molCO2_pl_hr': []},
-
-#'daily_max': {'irradiance_W_m2': [], 'ppfd': [],
-#              'pro_T_C': [], 'pro_RH': [],
-#              'transpiration_pl_ml_hr': [], 'ps_molCO2_pl_hr': []},
-
-#'24hr_data': {'irradiance_W_m2': [], 'ppfd': [],
-#              'pro_T_C': [], 'pro_RH': [],
-#              'transpiration_pl_ml_hr': [], 'ps_molCO2_pl_hr': []},
-
+    tbl.to_sql(SQL_CLIMATE_TABLE,con=db.engine,if_exists='replace',index=False)
