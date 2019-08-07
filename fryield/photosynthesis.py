@@ -156,7 +156,12 @@ def LAI_pct_max(tf,**kwargs):
     fw0 = kwargs['fw0_g']/A_m2
     LAI0 = LAI_from_w(fw0,**kwargs)
     LAI_max = kwargs['LAI_max']
-    LAI = LAI_at_t(tf,LAI0,**kwargs)
+    try:
+        LAI = LAI_at_t(tf,LAI0,**kwargs)
+    except:
+        #A = kwargs['ps_max_molCO2_m2_d']
+        #print('A: %s, t: %s' % (A,tf))
+        LAI = 0
     pct = LAI/LAI_max
     case_params['A_m2'] = A_m2
     return pct
