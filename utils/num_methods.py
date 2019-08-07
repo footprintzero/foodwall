@@ -7,6 +7,7 @@ import numpy as np
 def monte_carlo(fun_handle,output_fields,input_table,output_table,con,threshold_conf=.8,conf_int=.9,
                 N_runs=500,refresh=True,scope_groups=None):
     d90_factor = sct.norm.ppf(conf_int)*2
+    output_grp = list(output_fields.keys())[0]
 
     def params_hash(params):
         hash = {}
@@ -60,10 +61,12 @@ def monte_carlo(fun_handle,output_fields,input_table,output_table,con,threshold_
                     grp_params[sgrp] = sgrp_params
             params[grp] = grp_params
 
-        all_case = fun_handle(params)
-        output_grp = list(output_fields.keys())[0]
+        try:
+            all_case = fun_handle(params)
+            case = {fld: all_case[output_grp][fld] for fld in output_fields[output_grp]}
+        except BaseException as e:
+            case = {fld: np.nan for fld in output_fields[output_grp]}
 
-        case = {fld:all_case[output_grp][fld]for fld in output_fields[output_grp]}
         case.update(params_hash(params))
         return case
     ctbls = []
@@ -78,9 +81,8 @@ def monte_carlo(fun_handle,output_fields,input_table,output_table,con,threshold_
         else:
             action = 'append'
         ctbls.append(ctbl)
-        #ctbl.to_sql(output_table,if_exists=action,con=con,index=False)
+        ctbl.to_sql(output_table,if_exists=action,con=con,index=False)
     return pd.concat(ctbls,axis=0)
-
 
 
 

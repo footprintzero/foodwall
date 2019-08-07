@@ -6,6 +6,7 @@ from utils import chemistry as chem
 import psypy.psySI as si
 from fryield import fvcb as fvcb
 from design import climate as climate
+from fryield import LAI_helper as helper
 
 CONSTANTS = {'water_g_cm3':1,
              'MW_H2O':18.02,
@@ -134,11 +135,12 @@ def fw_at_LAI_pct(LAI_pct,hfull=0.25,pct_min=0.2,pct_max=0.8,**kwargs):
         LAI_p = LAI_pct_max(tf,**kwargs)
         return LAI_p
     global case_params
-    model_args = ['mature_wk']
+    model_args = ['mature_wk','ps_max_molCO2_m2_d']
     for arg in model_args:
         if not arg in kwargs:
             kwargs[arg] = case_params[arg]
-    t_guess = kwargs['mature_wk']*7*0.3
+    A= kwargs['ps_max_molCO2_m2_d']
+    t_guess = helper.days_to_pct(LAI_pct,A)
     result = newton(LAI_wrapper,LAI_pct,t_guess,kwargs,hfull=hfull,ymin=pct_min,ymax=pct_max)
     tf = result[0]
     fw = fw_at_t(tf,**kwargs)
