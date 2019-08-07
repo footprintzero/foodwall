@@ -13,7 +13,7 @@ conveyor_params={
     'd_pull_c': 750,  # driver pull capacity in pounds
     'cw_lb_ft': 3.3,  # chain weight (pounds per foot)
     'systemw': 1.5,
-    'lub_rate': 6.06,  # *10-6 gallons of lubricant per meter of conveyor movement
+    'lub_rate': .00000606,  # gallons of lubricant per meter of conveyor movement
     'driver_kw': 1.11855,  # kw determined from hp of given motor
     'driver_max_speed': .2286,  #m/s
     'lubricant':72,
@@ -103,9 +103,9 @@ def curve_ll(angle,radius):
 
 def cap_costs(params,**kwargs):
     nu = num_units(**kwargs)
-    prices_l = [params['prices']['track'],params['prices']['welding_jig'],params['prices']['brackets'],
-                params['prices']['inspector'],params['prices']['curves'],params['prices']['driver'],
-                params['prices']['chain'],params['prices']['lubricator'],params['prices']['pendants']]
+    prices = params['prices'].copy()
+    prices.pop('electricity_kwh')
+    prices_l = [p for p in prices.values()]
     costs = [n*p for n, p in zip(nu, prices_l)]
     total = sum(costs)
     costs.insert(0, total)
@@ -113,15 +113,14 @@ def cap_costs(params,**kwargs):
 
 
 def op_costs(driver_kw=1.11855,driver_max_speed=.2286,op_hours=18,building_l=150,building_w=15,systemw=1.5,
-             rpd=20,weeks_on=40,kw_price=.18,lubricant=72,lub_rate=6.06,floors=1,**kwargs):
+             rpd=20,weeks_on=40,kw_price=.18,lubricant=72,lub_rate=.00000606,floors=1,**kwargs):
     num_driver = num_units(building_l=building_l,building_w=building_w,floors=floors,systemw=systemw,**kwargs)[5]
     length = 2*(building_l+building_w+(2*systemw))
     d_avg_s = rpd*(length/op_hours/3600)
     driver_op = (d_avg_s/driver_max_speed)*driver_kw*18*7*weeks_on*num_driver*kw_price
     driver_energy = driver_op/kw_price
     rotations=rpd*length*7*weeks_on
-    lrate = lub_rate*(10**-6)
-    lub_op = rotations*lrate*lubricant*floors
+    lub_op = rotations*lub_rate*lubricant*floors
     total_op = driver_op+lub_op
     return [total_op,driver_op,lub_op,driver_energy]
 
