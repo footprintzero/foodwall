@@ -8,19 +8,20 @@ import conveyor.model as conveyor
 import nutrients.digester as digester
 import design.climate as climate
 import pandas as pd
-
+import math
 
 cases = []
 report = None
 SUBGROUPS = ['climate','prices','structure','tower'
-              'plants','robot','conveyor','hvac','nutrients',
+              'plants','robot','conveyor','hvac','nutrients','nursery',
               'maintenance','config','capex','opex','revenue','kpi']
 
 default_params = {'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':30,'pro_day_RH':80,
                      'amb_day_RH':70,'amb_night_RH':85,'pro_night_C':27,'pro_night_RH':85,
                      'rainfall_mm_wk':40,'angle_max':90,'cloud_cover':0.25,'daylight_hrs':10,
                      '24hr_avg':{},'24hr_max':{},'day_avg':{},'night_avg':{}},
-          'prices':{'electricity_kwh':0.18,'fruit_USD_kg':2.86},
+          'prices':{'electricity_kwh':0.18,'fruit_USD_kg':2.86,
+                    'labor_unsk_USD_hr':7.14,'labor_skill_premium':4.9},
           'structure':{'num_floors':1,'height_m':2.8,'building_L':150,'building_W':15},
           'tower':{'plant_spacing_cm':62,'plant_clearance_cm':35},
           'plants':{'harvest_extension':1,'rep_growth':0.25,'tsp_pct_leaf_energy':0.6,
@@ -36,7 +37,14 @@ default_params = {'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':30,'pro
                        'prices':{'thermal_energy_discount':0.9,
                                  },
                        },
-          'maintenance':{},
+          'nursery':{'seed_per_tray':70,'trays_per_rack':16,'seed_survival_pct':0.67,
+                     'LED_W_per_tray':80,
+                     'prices':{'seed_cost_USD':0.005,
+                               'rack_cost_USD':5000}
+                     },
+          'maintenance':{'hours_per_tower':2,'digester_hrs_1000m2':160,
+                         'hvac_hrs_1000m2':120,'robot_hrs_1000m2':120,
+                         'engineer_hrs_1000m2':30},
           'config':{'period':'A'},
           'capex':{'total':750000,'structure':0,'tower':0,'conveyor':100000,
                    'robot':0,'hvac':100000,'nutrient':100000},
@@ -87,7 +95,8 @@ def run():
 
     nutrients_update(case_params)
     case_params['hvac'] = hvac_update(case_params)
-    #maintenance
+    case_params['maintenance'] = maintenance_update(case_params)
+    case_params['nursery'] = nursery_update(case_params)
     financials_update(case_params)
     kpi_update(case_params)
 
@@ -198,13 +207,66 @@ def nutrients_update(case_params):
     case['supply_N_gpd'] = case_params['plants']['total_n_g_d']
     case_params['nutrients'] = digester.update(case)
 
+def nursery_update(params):
+    nursery = params['nursery'].copy()
+    prices = nursery['prices']
+    seed_per_tray = nursery['seed_per_tray']
+    trays_per_rack = nursery['trays_per_rack']
+    survival_pct = nursery['seed_survival_pct']
+    seed_per_rack = seed_per_tray*trays_per_rack
+    num_plants = params['tower']['num_plants']
+    num_seeds = int(num_plants/survival_pct)
+    num_racks = math.ceil(num_seeds*1/seed_per_tray*1/trays_per_rack)
+    num_trays= num_racks*trays_per_rack
+    germ_wk = params['plants']['germination_wk']
+    capex = {} ; opex = {} ; energy = {}
+    energy['total_kW'] = num_trays*nursery['LED_W_per_tray']/1000
+    opex['seed'] = num_seeds*prices['seed_cost_USD']
+    opex['LED'] = energy['total_kW']*params['prices']['electricity_kwh']*24*7*germ_wk
+    opex['total_USD'] = sum([opex[x] for x in opex if not x == 'total_USD'])
+    capex['total_USD'] = num_racks*prices['rack_cost_USD']
+    nursery['num_trays'] = num_trays
+    nursery['num_racks'] = num_racks
+    nursery['opex'] = opex
+    nursery['capex'] = capex
+    nursery['energy'] = energy
+
+    return nursery
+
+def maintenance_update(params):
+    global case_params
+    maint = case_params['maintenance'].copy()
+    maint['prices'] = case_params['prices'].copy()
+
+    A_m2 = params['structure']['facade_GFA']
+    N_1000m2 = math.ceil(A_m2/1000)
+    num_towers = params['tower']['num_towers']
+
+    tower_hrs = maint['hours_per_tower']*num_towers
+    digester_hrs = maint['digester_hrs_1000m2']*N_1000m2
+    hvac_hrs = maint['hvac_hrs_1000m2']*N_1000m2
+    robot_hrs = maint['robot_hrs_1000m2']*N_1000m2
+    engineer_hrs = maint['engineer_hrs_1000m2']*N_1000m2
+
+    unskilled_hrs = tower_hrs+digester_hrs+hvac_hrs+robot_hrs
+    skilled_hrs = engineer_hrs
+
+    labor_unsk_USD_hr = maint['prices']['labor_unsk_USD_hr']
+    skill_premium = maint['prices']['labor_skill_premium']
+    labor_USD = labor_unsk_USD_hr*(skilled_hrs*skill_premium+unskilled_hrs)
+
+    maint['N_1000m2'] = N_1000m2
+    maint['skilled_hrs'] = skilled_hrs
+    maint['unskilled_hrs'] = unskilled_hrs
+    maint['opex'] = {'total_USD':labor_USD}
+
+    return maint
 
 def financials_update(params):
     global case_params
     capex = case_params['capex'].copy()
     opex = case_params['opex'].copy()
     revenue = case_params['revenue'].copy()
-
 
     #capex
     capex['structure'] = params['structure']['capex']['structure_USD']
@@ -216,6 +278,7 @@ def financials_update(params):
         capex['hvac'] = params['hvac']['capex']['total_usd_dess']
     else:
         capex['hvac'] = params['hvac']['capex']['total_usd_refr']
+    capex['nursery'] = params['nursery']['capex']['total_USD']
     capex['total'] = sum([capex[x] for x in capex if not x == 'total'])
 
     #opex
@@ -227,7 +290,8 @@ def financials_update(params):
         opex['hvac']= params['hvac']['opex']['total_usd_dess']
     else:
         opex['hvac'] = params['hvac']['opex']['total_usd_refr']
-    #opex['maintenance']
+    opex['maintenance'] = params['maintenance']['opex']['total_USD']
+    opex['nursery'] = params['nursery']['opex']['total_USD']
     opex['total'] = sum([opex[x] for x in opex if not x == 'total'])
 
     #revenue
