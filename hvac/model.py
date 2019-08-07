@@ -2,6 +2,7 @@ import pandas as pd
 import math as m
 import psypy.psySI as si
 from utils.num_methods import newton
+import numpy as np
 
 SUBGROUPS = ['prices','energy','capex','opex']
 
@@ -248,7 +249,13 @@ def get_supply(f_hvac_cfm=40000,t_rate=.006, insolence=.25047, rf=.1, i_temp=300
     h_supply = ((h_hat3 * (f_hvac + f_nv)) - (f_nv*h_hat2)) / f_hvac
     ah_3 = ah_4-(t_water/(f_nv+f_hvac))
     ah_supply = ((ah_3*(f_hvac+f_nv))-(f_nv*ah_2))/f_hvac
-    supply = si.state("H", h_supply,"W", ah_supply,101325)
+    try:
+        hum = np.nan
+        supply = si.state("H", h_supply,"W", ah_supply,101325)
+        if supply[2]>=1:
+            raise ValueError('humidity greater than 1 %s' % hum)
+    except:
+        raise ValueError('humidity greater than 1 %s or something with AH %s enthalpy %s combo' % (hum, ah_supply, h_supply))
     (supply_temp, supply_humidity) = (supply[0], supply[2])
     max_btu_required = (t_kw+l_kw+u_kw)*3412.142
     return [supply_temp, supply_humidity, f_hvac_cfm,f_nv_cfm, max_btu_required,t_kw,l_kw,u_kw]
