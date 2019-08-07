@@ -28,9 +28,9 @@ default_params = {'climate':{'amb_day_C':32,'amb_night_C':27,'pro_day_C':30,'pro
                     'Ca_ubar':370,'leaf_light_capture':0.37,'LAI_pct':0.8,'leaf_allocation':0.35,
                     'tsp_mL_pl_d':220,'tsp_daymax_ml_pl_min':6.5,'ambient_climate':False},
           'robot':{'num_towers': 186,'trays_per_tower': 4,'fruit_pl_d_day': .56,'prices':{}},
-          'conveyor':{'num_towers':186,'rpd':20,'weeks_on':40},
+          'conveyor':{'num_towers':186,'rpd':20,'weeks_on':40,'prices':{}},
           'hvac':{'f_hvac_cfm':40000,'bio_kw':66.218,'t_rate':.00296,'num_towers':186,'weeks_on':40,
-                  'true_for_dess':True},
+                  'true_for_dess':True,'prices':{}},
           'nutrients':{'N_recovery':0.5,'supply_N_gpd':1084,
                        'biogas_yield_kJ_g':9.88,
                        'AN_capacity_factor_kgpd_m3':10,
@@ -149,6 +149,7 @@ def robot_update(params):
 
 def hvac_update(params):
     hvac_params = params['hvac'].copy()
+    hvac_params['prices'].update(params['prices'])
     floors=params['structure']['num_floors']
     hvac_params['floors']=floors
     hvac_params['num_towers'] = (params['tower']['num_towers'])/floors
@@ -179,8 +180,7 @@ def hvac_update(params):
     hvac_params['a_humidity_d'] = (1 / 100) * params['climate']['amb_day_RH']
     hvac_params['a_humidity_n'] = (1 / 100) * params['climate']['amb_night_RH']
     hvac_params['weeks_on']=params['plants']['weeks_on']
-    hvac_params['prices']=params['prices'].copy()
-    hvac_params=hvac.update(hvac_params)
+    hvac_params = hvac.update(hvac_params)
     return hvac_params
 
 
