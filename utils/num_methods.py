@@ -69,7 +69,7 @@ def monte_carlo(fun_handle,output_fields,input_table,output_table,con,threshold_
 
         case.update(params_hash(params))
         return case
-    ctbls = []
+    #ctbls = []
     for n in range(N_runs):
         case=get_case()
         values = list(case.values())
@@ -80,9 +80,9 @@ def monte_carlo(fun_handle,output_fields,input_table,output_table,con,threshold_
             action = 'replace'
         else:
             action = 'append'
-        ctbls.append(ctbl)
+        #ctbls.append(ctbl)
         ctbl.to_sql(output_table,if_exists=action,con=con,index=False)
-    return pd.concat(ctbls,axis=0)
+    #return pd.concat(ctbls,axis=0)
 
 
 
