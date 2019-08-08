@@ -7,7 +7,8 @@ from utils.num_methods import monte_carlo
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SQL_OUTPUT = 'cases'
 PARAM_XFILENAME = 'parameters.xlsx'
-GROUPS = ['robot','conveyor','hvac','prices']
+GROUPS = ['prices','climate','plants','structure','tower','nutrients',
+          'hvac','nursery','robot','conveyor','maintenance']
 ptbl = None
 
 WATCH_GROUP = 'kpi'
@@ -36,3 +37,48 @@ def import_parameters_from_excel():
     tbls = [pd.read_excel(os.path.join(BASE_DIR,PARAM_XFILENAME),grp)for grp in GROUPS]
     ptbl = pd.concat(tbls,axis=0)
     ptbl.to_sql(db.PARAM_TABLE,con=db.simeng, if_exists='replace', index=False)
+
+
+def grp_var(grp,field='simple_return',N_runs=20):
+    ctbl = run_mc(scope_groups=[grp],N_runs=N_runs)
+    values = ctbl[ctbl.parameter==field].value
+    valid_cases = values[~pd.isnull(values)].copy()
+    var = 0
+    if len(valid_cases)>0:
+        valmax = valid_cases.max()
+        valmin = valid_cases.min()
+        var = valmax-valmin
+    return var
+
+def get_cases(csv_export='cases.csv'):
+    #query the table
+    db.load()
+    rawtbl = pd.read_sql('select * from cases', con=db.simeng)
+
+    #assign group id
+    caseid = list(rawtbl.caseid)
+    caseid_nm = 0 ; groupid_j = 0
+    groupid = []
+    for c in caseid:
+        if c < caseid_nm:
+            groupid_j = groupid_j + 1
+        caseid_nm = c
+        groupid.append(groupid_j)
+    rawtbl['groupid'] = groupid
+    rawtbl['groupcaseid'] = [caseid[i] * 100 + groupid[i] for i in range(len(caseid))]
+    if len(csv_export)>0:
+        rawtbl.to_csv(csv_export,index=False)
+    pvt = pd.pivot_table(rawtbl, index='groupcaseid',
+                         values='value', columns='parameter', aggfunc='mean')
+
+    return pvt
+
+def get_case_slice(pvt,parameters,watch_fields=WATCH_FIELDS):
+    slice = pvt[~pd.isnull(pvt[parameters])][watch_fields+parameters]
+    return slice
+
+def case_analysis():
+    pvt = get_cases('')
+    #
+    #
+    #
