@@ -63,7 +63,7 @@ def run():
 
 def setup():
     global wp, robot_parameters
-    wp = robot_parameters
+    wp = robot_parameters.copy()
 
 
 def run_cases(cases):

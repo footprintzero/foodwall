@@ -26,10 +26,13 @@ CONSTANTS = {'Avogadro':6.023e+23,
 FILES = {'astm':os.path.join(BASE_DIR,'astm_g173_03.csv'),
 }
 
+SUBGROUPS = ['prices']
+
 default_params = {'angle_max':90,
                   'daylight_hrs':12,
                   'cloud_cover':0.25,
                   'ps_dli': 72,
+                  'prices':{},
                   }
 
 case_params = {}
@@ -44,7 +47,11 @@ def update(params=None):
     setup()
     if params is not None:
         for p in params:
-            case_params[p] = params[p]
+            if p in SUBGROUPS:
+                for s in params[p]:
+                    case_params[p][s] = params[p][s]
+            else:
+                case_params[p] = params[p]
     run()
     return case_params.copy()
 

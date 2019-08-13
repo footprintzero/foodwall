@@ -61,13 +61,17 @@ def monte_carlo(fun_handle,output_fields,input_table,output_table,con,threshold_
                     grp_params[sgrp] = sgrp_params
             params[grp] = grp_params
 
+        inputs = params_hash(params)
         try:
             all_case = fun_handle(params)
-            case = {fld: all_case[output_grp][fld] for fld in output_fields[output_grp]}
-        except BaseException as e:
-            case = {fld: np.nan for fld in output_fields[output_grp]}
+            case = {grp + '_' + fld: all_case[grp][fld]
+                    for grp in output_fields for fld in output_fields[grp]}
+        except:
+            case = {grp + '_' + fld: np.nan for grp
+                    in output_fields for fld in output_fields[grp]}
+            inputs = {fld: np.nan for fld in inputs}
 
-        case.update(params_hash(params))
+        case.update(inputs)
         return case
     #ctbls = []
     for n in range(N_runs):
