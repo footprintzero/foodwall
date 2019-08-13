@@ -11,8 +11,10 @@ GROUPS = ['prices','climate','plants','structure','tower','nutrients',
           'hvac','nursery','robot','conveyor','maintenance']
 ptbl = None
 
-WATCH_GROUP = 'kpi'
-WATCH_FIELDS = ['capex','opex','revenue','capex_m2','simple_return']
+WATCH_FIELDS = {'kpi':['capex','opex','revenue','profit','capex_m2','simple_return'],
+                'capex':['structure','tower','robot','conveyor','hvac','nutrients','nursery'],
+                'opex':['tower','robot','conveyor','hvac','nutrients','nursery','maintenance'],
+                'revenue':['fruit','biogas']}
 
 def get_cases():
     db.load()
@@ -20,12 +22,12 @@ def get_cases():
     return casetbl
 
 def run_mc(scope_groups=None,N_runs=500,refresh=True,threshold_conf=.8,conf_int=.9):
+    global WATCH_FIELDS
     db.load()
     fun_handle =design.update
-    output_fields = {WATCH_GROUP:WATCH_FIELDS}
     input_table=db.PARAM_TABLE
     output_table=SQL_OUTPUT
-    ctbl = monte_carlo(fun_handle=fun_handle,output_fields=output_fields,input_table=input_table,
+    ctbl = monte_carlo(fun_handle=fun_handle,output_fields=WATCH_FIELDS,input_table=input_table,
                 output_table=output_table,conf_int=conf_int,con=db.simeng,threshold_conf=threshold_conf,
                 N_runs=N_runs,refresh=refresh,scope_groups=scope_groups)
     return ctbl
@@ -68,13 +70,12 @@ def get_cases(csv_export='cases.csv'):
     rawtbl['groupcaseid'] = [caseid[i] * 100 + groupid[i] for i in range(len(caseid))]
     if len(csv_export)>0:
         rawtbl.to_csv(csv_export,index=False)
-    pvt = pd.pivot_table(rawtbl, index='groupcaseid',
-                         values='value', columns='parameter', aggfunc='mean')
+    pvt = pd.pivot_table(rawtbl, index='groupcaseid',values='value', columns='parameter', aggfunc='mean')
 
     return pvt
 
-def get_case_slice(pvt,parameters,watch_fields=WATCH_FIELDS):
-    slice = pvt[~pd.isnull(pvt[parameters])][watch_fields+parameters]
+def get_case_slice(pvt,parameter,watch_fields=WATCH_FIELDS):
+    slice = pvt[~pd.isnull(pvt[parameter])][watch_fields+[parameter]]
     return slice
 
 def case_analysis():

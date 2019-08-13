@@ -34,7 +34,7 @@ wp={}
 def setup():
     global wp
     global conveyor_params
-    wp = conveyor_params
+    wp = conveyor_params.copy()
 
 
 def update(params=None):
