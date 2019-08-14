@@ -103,12 +103,12 @@ energy_photon = 2.1 #umol/J
 RH = [0.5,0.65,0.75,0.9]
 
 cases = [(t,rh,i) for t in T_C for rh in RH for i in I]
-A = [ps.net_assimilation(x[0],x[1],x[2],x[2]*energy_photon) for x in cases]
+ps.setup()
+A = [ps.net_assimilation_rate(x[0],x[1],x[2],x[2]*energy_photon) for x in cases]
 df = pd.DataFrame({'T_C':[x[0]for x in cases],'RH':[x[1]for x in cases],'irradiance':[x[2]for x in cases],'A':A})
 
 #evaluate results as pivot table for irradiance = 1000 W/m2
 pvt = pd.pivot_table(df[df.irradiance==1000],values='A',index='T_C',columns='RH',aggfunc='mean')
-
 
 #get plant size and # of days to maturity as a % of LAI max - an indicator of maturity
 A = [5,8,10,15,20,22]
