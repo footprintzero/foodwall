@@ -194,7 +194,6 @@ def conveyor_update(params):
     conveyor_params['building_l']=params['structure']['building_L']
     conveyor_params['building_w']=params['structure']['building_W']
     conveyor_params['systemw']=params['structure']['width_m']
-    conveyor_params['prices']=params['prices'].copy()
     conveyor_params['weeks_on']=params['plants']['weeks_on']
     conveyor_params=conveyor.update(conveyor_params)
     return conveyor_params

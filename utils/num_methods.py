@@ -60,16 +60,16 @@ def monte_carlo(fun_handle,output_fields,input_table,output_table,con,threshold_
                     sgrp_params = get_parameter_samples(subgrouptbl[subgrouptbl.subgroup==sgrp])
                     grp_params[sgrp] = sgrp_params
             params[grp] = grp_params
-
+        inputs = params_hash(params)
         try:
             all_case = fun_handle(params)
-            case = {fld: all_case[output_grp][fld] for fld in output_fields[output_grp]}
-        except BaseException as e:
-            case = {fld: np.nan for fld in output_fields[output_grp]}
-
-        case.update(params_hash(params))
+            case = {grp+'_'+fld: all_case[grp][fld] for grp in output_fields for fld in output_fields[grp]}
+        except:
+            case = {grp+'_'+fld: np.nan for grp in output_fields for fld in output_fields[grp]}
+            inputs = {fld: np.nan for fld in inputs}
+        case.update(inputs)
         return case
-    ctbls = []
+    #ctbls = []
     for n in range(N_runs):
         case=get_case()
         values = list(case.values())
@@ -80,9 +80,9 @@ def monte_carlo(fun_handle,output_fields,input_table,output_table,con,threshold_
             action = 'replace'
         else:
             action = 'append'
-        ctbls.append(ctbl)
+        #ctbls.append(ctbl)
         ctbl.to_sql(output_table,if_exists=action,con=con,index=False)
-    return pd.concat(ctbls,axis=0)
+    #return pd.concat(ctbls,axis=0)
 
 
 

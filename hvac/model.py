@@ -74,7 +74,7 @@ working_params = {}
 def setup():
     global working_params
     global hvac_parameters
-    working_params = hvac_parameters
+    working_params = hvac_parameters.copy()
 
 
 def run():

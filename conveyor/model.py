@@ -34,7 +34,7 @@ wp={}
 def setup():
     global wp
     global conveyor_params
-    wp = conveyor_params
+    wp = conveyor_params.copy()
 
 
 def update(params=None):
@@ -53,9 +53,13 @@ def update(params=None):
 
 def run():
     global wp
-    cc = cap_costs(wp,num_towers=wp['num_towers'],building_l=wp['building_l'],building_w=wp['building_w'],
+    prices=wp['prices']
+    nu=num_units(num_towers=wp['num_towers'],building_l=wp['building_l'],building_w=wp['building_w'],
                    tower_lbs=wp['tower_lbs'],pendant_lbs=wp['pendant_lbs'],floors=wp['floors'],
                    d_pull_c=wp['d_pull_c'],cw_lb_ft=wp['cw_lb_ft'],systemw=wp['systemw'])
+    cc = cap_costs(nu,track=prices['track'],welding_jig=prices['welding_jig'],brackets=prices['brackets'],
+                   inspector=prices['inspector'],curves=prices['curves'],driver=prices['driver'],
+                   chain=prices['chain'],lubricator=prices['lubricator'],pendants=prices['pendants'])
     oc = op_costs(driver_kw=wp['driver_kw'],driver_max_speed=wp['driver_max_speed'],op_hours=wp['op_hours'],
                   building_l=wp['building_l'],building_w=wp['building_w'],systemw=wp['systemw'],
                   rpd=wp['rpd'],weeks_on=wp['weeks_on'],kw_price=wp['prices']['electricity_kwh'],lubricant=wp['lubricant'],
@@ -101,11 +105,10 @@ def curve_ll(angle,radius):
     return ll
 
 
-def cap_costs(params,**kwargs):
-    nu = num_units(**kwargs)
-    prices_l = [params['prices']['track'],params['prices']['welding_jig'],params['prices']['brackets'],
-                params['prices']['inspector'],params['prices']['curves'],params['prices']['driver'],
-                params['prices']['chain'],params['prices']['lubricator'],params['prices']['pendants']]
+def cap_costs(nu,track=44.5,welding_jig=123,brackets=90,inspector=313,curves=195,driver=8527,
+              chain=30.9,lubricator=4768,pendants=53):
+    prices_l = [track,welding_jig,brackets,inspector,curves,driver,
+                chain,lubricator,pendants]
     costs = [n*p for n, p in zip(nu, prices_l)]
     total = sum(costs)
     costs.insert(0, total)
