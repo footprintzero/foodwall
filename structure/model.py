@@ -1,7 +1,7 @@
 import pandas as pd
 import math
 
-SUBGROUPS = ['prices']
+SUBGROUPS = ['prices','energy','capex','opex']
 
 default_params = {'num_floors':1,
                   'building_floors':20,
@@ -27,8 +27,8 @@ def setup():
     case_params = default_params.copy()
 
 def update(params=None):
+    global SUBGROUPS
     setup()
-    global case_params
     if params is not None:
         for p in params:
             if p in SUBGROUPS:
@@ -38,6 +38,8 @@ def update(params=None):
                 case_params[p] = params[p]
     run()
     return case_params.copy()
+
+
 
 def run():
     global case_params

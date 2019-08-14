@@ -21,6 +21,7 @@ def get_cases():
     casetbl = pd.read_sql('select * from ' + SQL_OUTPUT,con=db.simeng)
     return casetbl
 
+
 def run_mc(scope_groups=None,N_runs=500,refresh=True,threshold_conf=.8,conf_int=.9):
     global WATCH_FIELDS
     db.load()
@@ -70,16 +71,11 @@ def get_cases(csv_export='cases.csv'):
     rawtbl['groupcaseid'] = [caseid[i] * 100 + groupid[i] for i in range(len(caseid))]
     if len(csv_export)>0:
         rawtbl.to_csv(csv_export,index=False)
-    pvt = pd.pivot_table(rawtbl, index='groupcaseid',values='value', columns='parameter', aggfunc='mean')
+    pvt = pd.pivot_table(rawtbl, index='groupcaseid',
+                         values='value', columns='parameter', aggfunc='mean')
 
     return pvt
 
 def get_case_slice(pvt,parameter,watch_fields=WATCH_FIELDS):
     slice = pvt[~pd.isnull(pvt[parameter])][watch_fields+[parameter]]
     return slice
-
-def case_analysis():
-    pvt = get_cases('')
-    #
-    #
-    #
