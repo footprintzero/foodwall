@@ -11,8 +11,10 @@ GROUPS = ['prices','climate','plants','structure','tower','nutrients',
           'hvac','nursery','robot','conveyor','maintenance']
 ptbl = None
 
-WATCH_FIELDS = {'opex':['hvac'],'capex':['hvac']}
-
+WATCH_FIELDS = {'kpi':['capex','opex','revenue','profit','capex_m2','simple_return'],
+                'capex':['structure','tower','robot','conveyor','hvac','nutrients','nursery'],
+                'opex':['tower','robot','conveyor','hvac','nutrients','nursery','maintenance'],
+                'revenue':['fruit','biogas']}
 
 def get_cases():
     db.load()
@@ -51,7 +53,6 @@ def grp_var(grp,field='simple_return',N_runs=20):
         var = valmax-valmin
     return var
 
-
 def get_cases(csv_export='cases.csv'):
     #query the table
     db.load()
@@ -78,9 +79,3 @@ def get_cases(csv_export='cases.csv'):
 def get_case_slice(pvt,parameter,watch_fields=WATCH_FIELDS):
     slice = pvt[~pd.isnull(pvt[parameter])][watch_fields+[parameter]]
     return slice
-
-def case_analysis():
-    pvt = get_cases('')
-    #
-    #
-    #

@@ -98,7 +98,8 @@ def update(params=None):
             if p in SUBGROUPS:
                 for s in params[p]:
                     case_params[p][s] = params[p][s]
-            case_params[p] = params[p]
+            else:
+                case_params[p] = params[p]
     run()
     return case_params.copy()
 

@@ -1,12 +1,12 @@
-import pyppfd.solar as light
-import structure.model as structure
-import towers.model as tower
-import fryield.model as plants
-import robot.model as rbt
-import hvac.model as hvac
-import conveyor.model as conveyor
-import nutrients.digester as digester
-import design.climate as climate
+from pyppfd import solar as light
+from structure import model as structure
+from towers import model as tower
+from fryield import model as plants
+from robot import model as rbt
+from hvac import model as hvac
+from conveyor import model as conveyor
+from nutrients import digester as digester
+from design import climate as climate
 import pandas as pd
 import math
 

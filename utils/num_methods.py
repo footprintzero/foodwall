@@ -60,13 +60,17 @@ def monte_carlo(fun_handle,output_fields,input_table,output_table,con,threshold_
                     sgrp_params = get_parameter_samples(subgrouptbl[subgrouptbl.subgroup==sgrp])
                     grp_params[sgrp] = sgrp_params
             params[grp] = grp_params
+
         inputs = params_hash(params)
         try:
             all_case = fun_handle(params)
-            case = {grp+'_'+fld: all_case[grp][fld] for grp in output_fields for fld in output_fields[grp]}
+            case = {grp + '_' + fld: all_case[grp][fld]
+                    for grp in output_fields for fld in output_fields[grp]}
         except:
-            case = {grp+'_'+fld: np.nan for grp in output_fields for fld in output_fields[grp]}
+            case = {grp + '_' + fld: np.nan for grp
+                    in output_fields for fld in output_fields[grp]}
             inputs = {fld: np.nan for fld in inputs}
+
         case.update(inputs)
         return case
     #ctbls = []

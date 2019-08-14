@@ -24,8 +24,7 @@ case_params = {}
 
 def setup():
     global case_params, default_parameters
-    case_params = default_params
-
+    case_params = default_params.copy()
 
 def update(params=None):
     global SUBGROUPS
