@@ -11,7 +11,7 @@ google-api-python-client==1.7.4
 google-auth==1.5.0
 google-auth-httplib2==0.0.3
 gspread==3.0.1
-httplib2==0.10.3
+httplib2==0.18.0
 idna==2.8
 Jinja2==2.10
 joblib==0.13.2
