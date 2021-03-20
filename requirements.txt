@@ -13,7 +13,7 @@ google-auth-httplib2==0.0.3
 gspread==3.0.1
 httplib2==0.10.3
 idna==2.8
-Jinja2==2.10
+Jinja2==2.11.3
 joblib==0.13.2
 kiwisolver==1.1.0
 MarkupSafe==1.0
