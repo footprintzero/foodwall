@@ -53,7 +53,7 @@ SQLAlchemy==1.1.5
 todoist==0.0.1
 todoist-python==7.0.18
 uritemplate==3.0.0
-urllib3==1.25.3
+urllib3==1.25.8
 virtualenv==16.0.0
 virtualenvwrapper-win==1.2.5
 wsgi-intercept==0.6.5
