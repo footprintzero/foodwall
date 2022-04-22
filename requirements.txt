@@ -37,7 +37,7 @@ pyasn1==0.4.4
 pyasn1-modules==0.2.2
 pygame==1.9.6
 pyparsing==2.4.0
-PyPDF2==1.26.0
+PyPDF2==1.27.5
 python-dateutil==2.8.0
 pytz==2019.1
 reportlab==3.4.0
