@@ -22,7 +22,7 @@ mplleaflet==0.0.5
 mysql-connector-python==8.0.17
 networkx==2.0
 nltk==3.2.5
-numpy==1.16.4
+numpy==1.22.0
 oauth2client==4.1.2
 ofxtools==0.4.1
 olefile==0.44
