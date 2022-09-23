@@ -29,7 +29,7 @@ olefile==0.44
 opencv-python==4.1.0.25
 pandas==0.24.2
 Pillow==6.1.0
-protobuf==3.9.0
+protobuf==3.18.3
 psutil==5.6.3
 psypy==0.0.2
 PuLP==1.6.8
